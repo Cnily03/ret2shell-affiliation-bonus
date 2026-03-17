@@ -2,30 +2,31 @@
 @plugin "@iconify/tailwind4";
 
 @theme {
-  --font-sans: 'gg sans', 'Noto Sans', 'Noto Sans SC', 'PingFang SC', 'Hiragino Sans GB',
-    'Microsoft YaHei', 'Helvetica Neue', Helvetica, Arial, sans-serif;
-  --font-mono: 'gg mono', 'Menlo', 'Consolas', 'Courier New', monospace;
+  --font-sans:
+    "gg sans", "Noto Sans", "Noto Sans SC", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Helvetica Neue",
+    Helvetica, Arial, sans-serif;
+  --font-mono: "gg mono", "Menlo", "Consolas", "Courier New", monospace;
 }
 
 /* Dynamic theme tokens — resolved by :root / :root[data-theme='light'] below */
 @theme inline {
-  --color-bg-primary:    var(--bg-primary);
-  --color-bg-secondary:  var(--bg-secondary);
-  --color-bg-tertiary:   var(--bg-tertiary);
-  --color-bg-accent:     var(--bg-accent);
-  --color-text-primary:  var(--text-primary);
-  --color-text-secondary:var(--text-secondary);
-  --color-text-muted:    var(--text-muted);
-  --color-text-link:     var(--text-link);
-  --color-brand:         var(--brand);
-  --color-brand-hover:   var(--brand-hover);
-  --color-green:         var(--green);
-  --color-yellow:        var(--yellow);
-  --color-red:           var(--red);
-  --color-border:        var(--border);
-  --color-card:          var(--card-bg);
-  --color-input:         var(--input-bg);
-  --color-hover:         var(--hover-bg);
+  --color-bg-primary: var(--bg-primary);
+  --color-bg-secondary: var(--bg-secondary);
+  --color-bg-tertiary: var(--bg-tertiary);
+  --color-bg-accent: var(--bg-accent);
+  --color-text-primary: var(--text-primary);
+  --color-text-secondary: var(--text-secondary);
+  --color-text-muted: var(--text-muted);
+  --color-text-link: var(--text-link);
+  --color-brand: var(--brand);
+  --color-brand-hover: var(--brand-hover);
+  --color-green: var(--green);
+  --color-yellow: var(--yellow);
+  --color-red: var(--red);
+  --color-border: var(--border);
+  --color-card: var(--card-bg);
+  --color-input: var(--input-bg);
+  --color-hover: var(--hover-bg);
 }
 
 :root {
@@ -45,13 +46,13 @@
   --border: #3f4147;
   --card-bg: #2b2d31;
   --input-bg: #1e1f22;
-  --hover-bg: rgba(255,255,255,0.04);
-  --shadow: rgba(0,0,0,0.4);
+  --hover-bg: rgba(255, 255, 255, 0.04);
+  --shadow: rgba(0, 0, 0, 0.4);
   --scrollbar-track: #1e1f22;
   --scrollbar-thumb: #3f4147;
 }
 
-:root[data-theme='light'] {
+:root[data-theme="light"] {
   --bg-primary: #ffffff;
   --bg-secondary: #f2f3f5;
   --bg-tertiary: #e3e5e8;
@@ -68,16 +69,27 @@
   --border: #e1e1e4;
   --card-bg: #ffffff;
   --input-bg: #e3e5e8;
-  --hover-bg: rgba(0,0,0,0.04);
-  --shadow: rgba(0,0,0,0.08);
+  --hover-bg: rgba(0, 0, 0, 0.04);
+  --shadow: rgba(0, 0, 0, 0.08);
   --scrollbar-track: #e3e5e8;
   --scrollbar-thumb: #c4c9d4;
 }
 
-*, *::before, *::after { box-sizing: border-box; }
-input, textarea, select, button { font-family: inherit; }
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+input,
+textarea,
+select,
+button {
+  font-family: inherit;
+}
 
-html, body, #root {
+html,
+body,
+#root {
   height: 100%;
   margin: 0;
   padding: 0;
@@ -100,17 +112,37 @@ a {
   text-underline-offset: 0.2rem;
 }
 
-
-::-webkit-scrollbar { width: 8px; height: 8px; }
-::-webkit-scrollbar-track { background: var(--scrollbar-track); }
-::-webkit-scrollbar-thumb { background: var(--scrollbar-thumb); border-radius: 4px; }
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: var(--scrollbar-track);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--scrollbar-thumb);
+  border-radius: 4px;
+}
 
 /* Google spinner animation */
-@keyframes spinner-rotate { 100% { transform: rotate(360deg); } }
+@keyframes spinner-rotate {
+  100% {
+    transform: rotate(360deg);
+  }
+}
 @keyframes spinner-dash {
-  0%   { stroke-dasharray: 1, 150; stroke-dashoffset: 0; }
-  50%  { stroke-dasharray: 90, 150; stroke-dashoffset: -35; }
-  100% { stroke-dasharray: 90, 150; stroke-dashoffset: -124; }
+  0% {
+    stroke-dasharray: 1, 150;
+    stroke-dashoffset: 0;
+  }
+  50% {
+    stroke-dasharray: 90, 150;
+    stroke-dashoffset: -35;
+  }
+  100% {
+    stroke-dasharray: 90, 150;
+    stroke-dashoffset: -124;
+  }
 }
 
 /* Table styles */
@@ -125,5 +157,9 @@ a {
   border-bottom: 1px solid var(--border);
   vertical-align: middle;
 }
-.dc-table tbody tr:last-child td { border-bottom: none; }
-.dc-table tbody tr:hover td { background: var(--hover-bg); }
+.dc-table tbody tr:last-child td {
+  border-bottom: none;
+}
+.dc-table tbody tr:hover td {
+  background: var(--hover-bg);
+}

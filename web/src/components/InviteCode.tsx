@@ -1,13 +1,17 @@
-import { useState } from 'react'
-import clsx from 'clsx'
-import { patchInviteCode } from '@/api/client'
+import clsx from "clsx";
+import { useState } from "react";
+import { patchInviteCode } from "@/api/client";
 
-
-function Btn({ children, onClick, disabled, variant = 'ghost' }: {
-  children: React.ReactNode
-  onClick?: () => void
-  disabled?: boolean
-  variant?: 'brand' | 'ghost'
+function Btn({
+  children,
+  onClick,
+  disabled,
+  variant = "ghost",
+}: {
+  children: React.ReactNode;
+  onClick?: () => void;
+  disabled?: boolean;
+  variant?: "brand" | "ghost";
 }) {
   return (
     <button
@@ -15,14 +19,14 @@ function Btn({ children, onClick, disabled, variant = 'ghost' }: {
       onClick={onClick}
       disabled={disabled}
       className={clsx(
-        'inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded text-[13px] font-medium border-0 transition-[filter] duration-150',
-        disabled ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer hover:brightness-110 active:brightness-95',
-        variant === 'brand' ? 'bg-brand text-white' : 'bg-bg-accent text-text-primary',
+        "inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded text-[13px] font-medium border-0 transition-[filter] duration-150",
+        disabled ? "opacity-60 cursor-not-allowed" : "cursor-pointer hover:brightness-110 active:brightness-95",
+        variant === "brand" ? "bg-brand text-white" : "bg-bg-accent text-text-primary"
       )}
     >
       {children}
     </button>
-  )
+  );
 }
 
 export default function InviteCode({
@@ -30,31 +34,31 @@ export default function InviteCode({
   onRefresh,
   loading: propLoading,
 }: {
-  code: string
-  onRefresh?: (newCode: string) => void
-  loading?: boolean
+  code: string;
+  onRefresh?: (newCode: string) => void;
+  loading?: boolean;
 }) {
-  const [refreshing, setRefreshing] = useState(false)
-  const [copied, setCopied] = useState(false)
+  const [refreshing, setRefreshing] = useState(false);
+  const [copied, setCopied] = useState(false);
 
   const handleCopy = async () => {
-    if (!code) return
-    await navigator.clipboard.writeText(code)
-    setCopied(true)
-    setTimeout(() => setCopied(false), 1500)
-  }
+    if (!code) return;
+    await navigator.clipboard.writeText(code);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 1500);
+  };
 
   const handleRefresh = async () => {
-    setRefreshing(true)
+    setRefreshing(true);
     try {
-      const res = await patchInviteCode()
-      onRefresh?.(res.invite_code)
+      const res = await patchInviteCode();
+      onRefresh?.(res.invite_code);
     } catch {
       // ignore
     } finally {
-      setRefreshing(false)
+      setRefreshing(false);
     }
-  }
+  };
 
   return (
     <div className="px-4 py-3.5 bg-card rounded-lg border border-border">
@@ -63,17 +67,24 @@ export default function InviteCode({
         {propLoading ? (
           <div className="w-35 h-8.5 rounded bg-bg-accent" />
         ) : (
-          <code className="font-mono text-[17px] font-bold tracking-[0.12em] text-text-primary px-3 py-1.25 bg-input rounded select-all">{code}</code>
+          <code className="font-mono text-[17px] font-bold tracking-[0.12em] text-text-primary px-3 py-1.25 bg-input rounded select-all">
+            {code}
+          </code>
         )}
         <Btn variant="brand" onClick={handleCopy} disabled={propLoading || !code}>
-          <span className={clsx('text-[14px] shrink-0', copied ? 'icon-[mdi--check]' : 'icon-[mdi--content-copy]')} />
-          {copied ? '已复制' : '复制'}
+          <span className={clsx("text-[14px] shrink-0", copied ? "icon-[mdi--check]" : "icon-[mdi--content-copy]")} />
+          {copied ? "已复制" : "复制"}
         </Btn>
         <Btn onClick={handleRefresh} disabled={propLoading || refreshing}>
-          <span className={clsx('text-[14px] shrink-0 icon-[mdi--refresh]', refreshing && 'animate-[spinner-rotate_0.8s_linear_infinite]')} />
+          <span
+            className={clsx(
+              "text-[14px] shrink-0 icon-[mdi--refresh]",
+              refreshing && "animate-[spinner-rotate_0.8s_linear_infinite]"
+            )}
+          />
           刷新
         </Btn>
       </div>
     </div>
-  )
+  );
 }

@@ -1,72 +1,77 @@
-import { useRef, useState, type FormEvent } from 'react'
-import type { FromEntry } from '@/api/types'
-import { formatTime, renderUriTmpl } from '@/utils'
+import { type FormEvent, useRef, useState } from "react";
+import type { FromEntry } from "@/api/types";
+import { formatTime, renderUriTmpl } from "@/utils";
 
-const teamUrlTmpl = import.meta.env.VITE_TEAM_URL_TMPL || '/games/{game_id}/teams/{team_id}'
+const teamUrlTmpl = import.meta.env.VITE_TEAM_URL_TMPL || "/games/{game_id}/teams/{team_id}";
 
 interface Props {
-  from: FromEntry | null
-  gameId: number
-  loading?: boolean
-  onRedeem?: (inviteCode: string) => Promise<void>
+  from: FromEntry | null;
+  gameId: number;
+  loading?: boolean;
+  onRedeem?: (inviteCode: string) => Promise<void>;
 }
 
 export default function BindInviteCard({ from, loading, onRedeem }: Props) {
-  const [code, setCode] = useState('')
-  const [submitting, setSubmitting] = useState(false)
-  const [hint, setHint] = useState<{ text: string; type: 'error' | 'info' } | null>(null)
-  const inputRef = useRef<HTMLInputElement>(null)
+  const [code, setCode] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const [hint, setHint] = useState<{ text: string; type: "error" | "info" } | null>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   const handlePaste = async () => {
     try {
-      let text = ''
+      let text = "";
       if (navigator.clipboard && window.isSecureContext) {
-        text = await navigator.clipboard.readText()
+        text = await navigator.clipboard.readText();
       }
-      const cleaned = text.replace(/[^A-Za-z0-9]/g, '').toUpperCase().slice(0, 12)
-      setCode(cleaned)
-      setHint(null)
-      inputRef.current?.focus()
+      const cleaned = text
+        .replace(/[^A-Za-z0-9]/g, "")
+        .toUpperCase()
+        .slice(0, 12);
+      setCode(cleaned);
+      setHint(null);
+      inputRef.current?.focus();
     } catch {
       // clipboard read not permitted — let browser native paste handle it
-      inputRef.current?.focus()
+      inputRef.current?.focus();
     }
-  }
+  };
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault()
-    if (!onRedeem || submitting) return
-    const sanitized = code.replace(/\s+/g, '').trim()
+    event.preventDefault();
+    if (!onRedeem || submitting) return;
+    const sanitized = code.replace(/\s+/g, "").trim();
     if (!sanitized) {
-      setHint({ text: '请输入邀请码', type: 'error' })
-      return
+      setHint({ text: "请输入邀请码", type: "error" });
+      return;
     }
 
-    setSubmitting(true)
-    setHint(null)
+    setSubmitting(true);
+    setHint(null);
     try {
-      await onRedeem(sanitized)
-      setCode('')
+      await onRedeem(sanitized);
+      setCode("");
     } catch (err) {
-      let message = '绑定失败，请稍后再试'
-      if (err && typeof err === 'object' && 'response' in err) {
+      let message = "绑定失败，请稍后再试";
+      if (err && typeof err === "object" && "response" in err) {
         try {
-          const resp = (err as { response?: Response }).response
+          const resp = (err as { response?: Response }).response;
           if (resp) {
-            const text = await resp.text()
-            if (text) message = text
+            const text = await resp.text();
+            if (text) message = text;
           }
-        } catch { /* ignore */ }
+        } catch {
+          /* ignore */
+        }
       } else if (err instanceof Error && err.message) {
-        message = err.message
+        message = err.message;
       }
-      setHint({ text: message, type: 'error' })
+      setHint({ text: message, type: "error" });
     } finally {
-      setSubmitting(false)
+      setSubmitting(false);
     }
-  }
+  };
 
-  const isBound = Boolean(!loading && from)
+  const isBound = Boolean(!loading && from);
 
   return (
     <div className="px-4 py-3.5 bg-card rounded-lg border border-border">
@@ -112,7 +117,8 @@ export default function BindInviteCard({ from, loading, onRedeem }: Props) {
               <span className="text-border shrink-0">·</span>
               <a
                 href={renderUriTmpl(teamUrlTmpl, { team_id: from.peer_team.id })}
-                target="_blank" rel="noopener noreferrer"
+                target="_blank"
+                rel="noopener noreferrer"
                 className="inline-flex items-center gap-1 text-text-link no-underline border-b border-transparent hover:border-current pb-px truncate"
               >
                 <span className="icon-[mdi--account-multiple] text-[12px] shrink-0" />
@@ -130,7 +136,9 @@ export default function BindInviteCard({ from, loading, onRedeem }: Props) {
               className="w-11 h-11 rounded-full object-cover shrink-0"
             />
             <div className="flex flex-col gap-0.5">
-              <span className="text-[15px] font-semibold text-text-primary whitespace-nowrap">{from.peer_user.nickname}</span>
+              <span className="text-[15px] font-semibold text-text-primary whitespace-nowrap">
+                {from.peer_user.nickname}
+              </span>
               <span className="text-xs text-text-muted whitespace-nowrap">@{from.peer_user.account}</span>
             </div>
           </div>
@@ -146,15 +154,19 @@ export default function BindInviteCard({ from, loading, onRedeem }: Props) {
                 type="text"
                 value={code}
                 onChange={(e) => {
-                  const filtered = e.target.value.replace(/[^A-Za-z0-9]/g, '').toUpperCase()
-                  setCode(filtered)
-                  setHint(null)
+                  const filtered = e.target.value.replace(/[^A-Za-z0-9]/g, "").toUpperCase();
+                  setCode(filtered);
+                  setHint(null);
                 }}
                 onPaste={(e) => {
-                  e.preventDefault()
-                  const pasted = e.clipboardData.getData('text').replace(/[^A-Za-z0-9]/g, '').toUpperCase().slice(0, 12)
-                  setCode(pasted)
-                  setHint(null)
+                  e.preventDefault();
+                  const pasted = e.clipboardData
+                    .getData("text")
+                    .replace(/[^A-Za-z0-9]/g, "")
+                    .toUpperCase()
+                    .slice(0, 12);
+                  setCode(pasted);
+                  setHint(null);
                 }}
                 placeholder="输入邀请码"
                 autoComplete="off"
@@ -176,18 +188,20 @@ export default function BindInviteCard({ from, loading, onRedeem }: Props) {
             </div>
             <button
               type="submit"
-              disabled={!onRedeem || submitting || !code.replace(/\s+/g, '').trim()}
+              disabled={!onRedeem || submitting || !code.replace(/\s+/g, "").trim()}
               className="shrink-0 px-4 py-1.25 rounded bg-brand text-white font-semibold text-sm cursor-pointer transition-[filter] duration-150 hover:brightness-110 active:brightness-95 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {submitting ? '绑定中…' : '绑定'}
+              {submitting ? "绑定中…" : "绑定"}
             </button>
           </div>
           {/* Hint line */}
-          <p className={`h-4.25 text-[12px] leading-snug truncate ${hint?.type === 'error' ? 'text-red' : 'text-text-muted'}`}>
-            {hint ? hint.text : '填写收到的邀请码并绑定，每个账号仅能绑定一次'}
+          <p
+            className={`h-4.25 text-[12px] leading-snug truncate ${hint?.type === "error" ? "text-red" : "text-text-muted"}`}
+          >
+            {hint ? hint.text : "填写收到的邀请码并绑定，每个账号仅能绑定一次"}
           </p>
         </form>
       )}
     </div>
-  )
+  );
 }

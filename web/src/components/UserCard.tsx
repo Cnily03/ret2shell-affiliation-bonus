@@ -1,4 +1,4 @@
-import type { InfoResponse } from '@/api/types'
+import type { InfoResponse } from "@/api/types";
 
 export default function UserCard({ info, loading }: { info: InfoResponse | null; loading?: boolean }) {
   return (
@@ -27,5 +27,5 @@ export default function UserCard({ info, loading }: { info: InfoResponse | null;
         )}
       </div>
     </div>
-  )
+  );
 }

@@ -1,78 +1,83 @@
-import { useState } from 'react'
-import clsx from 'clsx'
-import type { InvitedEntry } from '@/api/types'
-import { formatTime, renderUriTmpl } from '@/utils'
-import Toggle from '@/components/Toggle'
+import clsx from "clsx";
+import { useState } from "react";
+import type { InvitedEntry } from "@/api/types";
+import Toggle from "@/components/Toggle";
+import { formatTime, renderUriTmpl } from "@/utils";
 
-const teamUrlTmpl = import.meta.env.VITE_TEAM_URL_TMPL || '/games/{game_id}/teams/{team_id}'
+const teamUrlTmpl = import.meta.env.VITE_TEAM_URL_TMPL || "/games/{game_id}/teams/{team_id}";
 
 function aggregateByTeam(invited: InvitedEntry[]) {
-  const map = new Map<number, { name: string; total: number; count: number }>()
+  const map = new Map<number, { name: string; total: number; count: number }>();
   for (const entry of invited) {
-    const tid = entry.bonus_team.id
-    const ex = map.get(tid)
-    if (ex) { ex.total += entry.bonus_score; ex.count++ }
-    else map.set(tid, { name: entry.bonus_team.name, total: entry.bonus_score, count: 1 })
+    const tid = entry.bonus_team.id;
+    const ex = map.get(tid);
+    if (ex) {
+      ex.total += entry.bonus_score;
+      ex.count++;
+    } else map.set(tid, { name: entry.bonus_team.name, total: entry.bonus_score, count: 1 });
   }
-  return Array.from(map.entries()).map(([id, v]) => ({ id, ...v }))
+  return Array.from(map.entries()).map(([id, v]) => ({ id, ...v }));
 }
 
 function TeamLink({ name, teamId, gameId }: { name: string; teamId: number; gameId: number }) {
   return (
     <a
       href={renderUriTmpl(teamUrlTmpl, { game_id: gameId, team_id: teamId })}
-      target="_blank" rel="noopener noreferrer"
+      target="_blank"
+      rel="noopener noreferrer"
       className="inline-flex items-center gap-1 text-text-link no-underline border-b border-transparent hover:border-current pb-px"
     >
       <span className="icon-[mdi--account-multiple] text-[13px] shrink-0" />
       {name}
     </a>
-  )
+  );
 }
 
 function InviteToken({ code }: { code: string }) {
-  const [state, setState] = useState<'idle' | 'copied' | 'error'>('idle')
+  const [state, setState] = useState<"idle" | "copied" | "error">("idle");
 
   const handleCopy = async () => {
-    const reset = () => window.setTimeout(() => setState('idle'), 1600)
+    const reset = () => window.setTimeout(() => setState("idle"), 1600);
     try {
       if (navigator.clipboard && window.isSecureContext) {
-        await navigator.clipboard.writeText(code)
+        await navigator.clipboard.writeText(code);
       } else {
-        const textarea = document.createElement('textarea')
-        textarea.value = code
-        textarea.style.position = 'fixed'
-        textarea.style.opacity = '0'
-        document.body.appendChild(textarea)
-        textarea.focus()
-        textarea.select()
-        document.execCommand('copy')
-        document.body.removeChild(textarea)
+        const textarea = document.createElement("textarea");
+        textarea.value = code;
+        textarea.style.position = "fixed";
+        textarea.style.opacity = "0";
+        document.body.appendChild(textarea);
+        textarea.focus();
+        textarea.select();
+        document.execCommand("copy");
+        document.body.removeChild(textarea);
       }
-      setState('copied')
-      reset()
+      setState("copied");
+      reset();
     } catch {
-      setState('error')
-      reset()
+      setState("error");
+      reset();
     }
-  }
+  };
 
   return (
     <button
       type="button"
       onClick={handleCopy}
-      title={state === 'copied' ? '已复制' : state === 'error' ? '复制失败' : '复制'}
+      title={state === "copied" ? "已复制" : state === "error" ? "复制失败" : "复制"}
       className="group inline-flex items-center gap-1.5 px-1.5 py-1 rounded bg-input text-text-primary font-mono text-xs tracking-[0.08em] cursor-pointer select-all transition-colors duration-150 hover:bg-bg-accent focus:outline-none"
     >
-      <span className={clsx(
-        'text-[12px] shrink-0 transition-colors duration-150',
-        state === 'copied' && 'icon-[mdi--check] text-green',
-        state === 'error' && 'icon-[mdi--close] text-red',
-        state === 'idle' && 'icon-[mdi--content-copy] text-text-muted group-hover:text-brand',
-      )} />
+      <span
+        className={clsx(
+          "text-[12px] shrink-0 transition-colors duration-150",
+          state === "copied" && "icon-[mdi--check] text-green",
+          state === "error" && "icon-[mdi--close] text-red",
+          state === "idle" && "icon-[mdi--content-copy] text-text-muted group-hover:text-brand"
+        )}
+      />
       <span>{code}</span>
     </button>
-  )
+  );
 }
 
 function SkeletonRow() {
@@ -87,14 +92,20 @@ function SkeletonRow() {
           </div>
         </div>
       </td>
-      <td className="px-3 py-2.5"><div className="w-24 h-3 rounded-sm bg-bg-accent" /></td>
+      <td className="px-3 py-2.5">
+        <div className="w-24 h-3 rounded-sm bg-bg-accent" />
+      </td>
       <td className="px-3 py-2.5">
         <div className="h-7 rounded-md bg-bg-accent" />
       </td>
-      <td className="px-3 py-2.5"><div className="w-20 h-3 rounded-sm bg-bg-accent" /></td>
-      <td className="px-3 py-2.5"><div className="w-10 h-3 rounded-sm bg-bg-accent ml-auto" /></td>
+      <td className="px-3 py-2.5">
+        <div className="w-20 h-3 rounded-sm bg-bg-accent" />
+      </td>
+      <td className="px-3 py-2.5">
+        <div className="w-10 h-3 rounded-sm bg-bg-accent ml-auto" />
+      </td>
     </tr>
-  )
+  );
 }
 
 export default function InvitedList({
@@ -102,12 +113,12 @@ export default function InvitedList({
   gameId,
   loading,
 }: {
-  invited: InvitedEntry[]
-  gameId: number
-  loading?: boolean
+  invited: InvitedEntry[];
+  gameId: number;
+  loading?: boolean;
 }) {
-  const [detailed, setDetailed] = useState(true)
-  const teamStats = aggregateByTeam(invited)
+  const [detailed, setDetailed] = useState(true);
+  const teamStats = aggregateByTeam(invited);
 
   return (
     <div className="bg-card rounded-lg border border-border overflow-hidden">
@@ -116,14 +127,12 @@ export default function InvitedList({
         <span className="text-[11px] font-bold uppercase tracking-[0.06em] text-text-muted">
           已邀请用户
           {!loading && invited.length > 0 && (
-            <span className="ml-2 px-1.75 py-px rounded-[10px] bg-bg-accent text-text-secondary text-[11px] font-semibold">{invited.length}</span>
+            <span className="ml-2 px-1.75 py-px rounded-[10px] bg-bg-accent text-text-secondary text-[11px] font-semibold">
+              {invited.length}
+            </span>
           )}
         </span>
-        <Toggle
-          checked={!detailed}
-          onChange={(v) => setDetailed(!v)}
-          label={detailed ? '详细信息' : '统计信息'}
-        />
+        <Toggle checked={!detailed} onChange={(v) => setDetailed(!v)} label={detailed ? "详细信息" : "统计信息"} />
       </div>
 
       {/* Detail table */}
@@ -132,16 +141,30 @@ export default function InvitedList({
           <table className="dc-table">
             <thead>
               <tr>
-                <th className="px-3 py-2 text-left text-[11px] font-bold uppercase tracking-[0.05em] text-text-muted whitespace-nowrap">受邀用户</th>
-                <th className="px-3 py-2 text-left text-[11px] font-bold uppercase tracking-[0.05em] text-text-muted whitespace-nowrap">绑定时间</th>
-                <th className="px-3 py-2 text-left text-[11px] font-bold uppercase tracking-[0.05em] text-text-muted whitespace-nowrap">邀请码</th>
-                <th className="px-3 py-2 text-left text-[11px] font-bold uppercase tracking-[0.05em] text-text-muted whitespace-nowrap">奖励队伍</th>
-                <th className="px-3 py-2 text-right text-[11px] font-bold uppercase tracking-[0.05em] text-text-muted whitespace-nowrap">奖励分</th>
+                <th className="px-3 py-2 text-left text-[11px] font-bold uppercase tracking-[0.05em] text-text-muted whitespace-nowrap">
+                  受邀用户
+                </th>
+                <th className="px-3 py-2 text-left text-[11px] font-bold uppercase tracking-[0.05em] text-text-muted whitespace-nowrap">
+                  绑定时间
+                </th>
+                <th className="px-3 py-2 text-left text-[11px] font-bold uppercase tracking-[0.05em] text-text-muted whitespace-nowrap">
+                  邀请码
+                </th>
+                <th className="px-3 py-2 text-left text-[11px] font-bold uppercase tracking-[0.05em] text-text-muted whitespace-nowrap">
+                  奖励队伍
+                </th>
+                <th className="px-3 py-2 text-right text-[11px] font-bold uppercase tracking-[0.05em] text-text-muted whitespace-nowrap">
+                  奖励分
+                </th>
               </tr>
             </thead>
             <tbody>
               {loading ? (
-                <><SkeletonRow /><SkeletonRow /><SkeletonRow /></>
+                <>
+                  <SkeletonRow />
+                  <SkeletonRow />
+                  <SkeletonRow />
+                </>
               ) : invited.length === 0 ? (
                 <tr>
                   <td colSpan={5} className="px-3 py-7 text-center text-text-muted text-[13px]">
@@ -177,9 +200,7 @@ export default function InvitedList({
                     <td className="px-3 py-2.5 text-[13px] text-text-secondary">
                       <TeamLink name={entry.bonus_team.name} teamId={entry.bonus_team.id} gameId={gameId} />
                     </td>
-                    <td className="px-3 py-2.5 text-right font-bold text-green text-sm">
-                      +{entry.bonus_score}
-                    </td>
+                    <td className="px-3 py-2.5 text-right font-bold text-green text-sm">+{entry.bonus_score}</td>
                   </tr>
                 ))
               )}
@@ -192,9 +213,15 @@ export default function InvitedList({
           <table className="dc-table">
             <thead>
               <tr>
-                <th className="px-3 py-2 text-left text-[11px] font-bold uppercase tracking-[0.05em] text-text-muted whitespace-nowrap">队伍</th>
-                <th className="px-3 py-2 text-center text-[11px] font-bold uppercase tracking-[0.05em] text-text-muted whitespace-nowrap">邀请人数</th>
-                <th className="px-3 py-2 text-right text-[11px] font-bold uppercase tracking-[0.05em] text-text-muted whitespace-nowrap">累计奖励</th>
+                <th className="px-3 py-2 text-left text-[11px] font-bold uppercase tracking-[0.05em] text-text-muted whitespace-nowrap">
+                  队伍
+                </th>
+                <th className="px-3 py-2 text-center text-[11px] font-bold uppercase tracking-[0.05em] text-text-muted whitespace-nowrap">
+                  邀请人数
+                </th>
+                <th className="px-3 py-2 text-right text-[11px] font-bold uppercase tracking-[0.05em] text-text-muted whitespace-nowrap">
+                  累计奖励
+                </th>
               </tr>
             </thead>
             <tbody>
@@ -229,5 +256,5 @@ export default function InvitedList({
         </div>
       )}
     </div>
-  )
+  );
 }

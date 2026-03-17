@@ -1,11 +1,6 @@
 export default function Spinner({ size = 40 }: { size?: number }) {
   return (
-    <svg
-      width={size}
-      height={size}
-      viewBox="0 0 50 50"
-      className="animate-[spinner-rotate_1.4s_linear_infinite]"
-    >
+    <svg width={size} height={size} viewBox="0 0 50 50" className="animate-[spinner-rotate_1.4s_linear_infinite]">
       <circle
         cx="25"
         cy="25"
@@ -17,5 +12,5 @@ export default function Spinner({ size = 40 }: { size?: number }) {
         className="animate-[spinner-dash_1.4s_ease-in-out_infinite]"
       />
     </svg>
-  )
+  );
 }
