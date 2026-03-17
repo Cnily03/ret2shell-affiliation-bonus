@@ -13,7 +13,7 @@ import type { ThemePreference } from "@/theme";
 import { getThemePreference, setThemePreference } from "@/theme";
 import { getToken, redirectToLogin, renderUriTmpl } from "@/utils";
 
-type Phase = "loading" | "no-team" | "ready" | "error";
+type Phase = "loading" | "no-team" | "game-ended" | "ready" | "error";
 
 const THEME_CYCLE: ThemePreference[] = ["system", "light", "dark"];
 const THEME_ICON: Record<ThemePreference, string> = {
@@ -49,7 +49,7 @@ function ThemeToggle() {
 export default function App() {
   const [phase, setPhase] = useState<Phase>("loading");
   const [info, setInfo] = useState<InfoResponse | null>(null);
-  const [, setCheck] = useState<CheckResponse | null>(null);
+  const [check, setCheck] = useState<CheckResponse | null>(null);
   const [status, setStatus] = useState<StatusResponse | null>(null);
   const [errMsg, setErrMsg] = useState("");
 
@@ -82,6 +82,17 @@ export default function App() {
         setInfo(infoData);
         document.title = `邀请奖励 · ${infoData.game.name}`;
 
+        if (infoData.bonus.game_ended) {
+          try {
+            const statusData = await getStatus();
+            setStatus(statusData);
+          } catch {
+            // best-effort; show page anyway
+          }
+          setPhase("game-ended");
+          return;
+        }
+
         let checkData: CheckResponse | null = null;
         try {
           checkData = await postCheck();
@@ -89,6 +100,16 @@ export default function App() {
         } catch (e: unknown) {
           if (e && typeof e === "object" && "response" in e) {
             const resp = (e as { response: Response }).response;
+            if (resp.status === 503) {
+              try {
+                const statusData = await getStatus();
+                setStatus(statusData);
+              } catch {
+                // best-effort
+              }
+              setPhase("game-ended");
+              return;
+            }
             if (resp.status === 412) {
               setPhase("no-team");
               return;
@@ -116,7 +137,7 @@ export default function App() {
 
   const header = (
     <div className="flex items-center justify-between">
-      <h1 className="text-xl font-bold text-text-primary tracking-[0.15em]">邀请奖励</h1>
+      <h1 className="text-xl font-bold text-text-primary tracking-wider">邀请奖励</h1>
       <ThemeToggle />
     </div>
   );
@@ -130,6 +151,29 @@ export default function App() {
       <>
         {header}
         <Warning>{errMsg}</Warning>
+      </>
+    );
+  }
+
+  if (phase === "game-ended" && info) {
+    return wrap(
+      <>
+        {header}
+        <GameBanner game={info.game} gameUrl={renderUriTmpl(gameUrlTemplate, { game_id: info.bonus.game_id })} />
+        <UserCard info={info.user} />
+        <Warning>比赛已结束，邀请奖励功能已停止使用。</Warning>
+        {status && (
+          <>
+            <BindInvite from={status.from} gameId={info.bonus.game_id} gameEnded />
+            <InviteCode
+              code={status.invite_code}
+              bonusScore={info.bonus.bonus_score}
+              maxScore={info.bonus.max_score}
+              gameEnded
+            />
+            <InvitedList invited={status.invited} gameId={info.bonus.game_id} />
+          </>
+        )}
       </>
     );
   }
@@ -166,7 +210,11 @@ export default function App() {
       )}
 
       {/* User card skeleton or real */}
-      {isLoading || !info ? <UserCard info={null} loading /> : <UserCard info={info.user} />}
+      {isLoading || !info ? (
+        <UserCard info={null} loading />
+      ) : (
+        <UserCard info={info.user} team={check?.team} maxScore={info.bonus.max_score} />
+      )}
 
       {/* Bind invite card */}
       {isLoading || !info || !status ? (

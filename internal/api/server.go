@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"net/http"
+	"time"
 
 	"github.com/redis/go-redis/v9"
 
@@ -19,12 +20,18 @@ const checkContextKey contextKey = "check"
 
 // Server holds all dependencies for the API handlers.
 type Server struct {
-	DB                 *sql.DB
-	Cache              *redis.Client
-	BonusService       *service.BonusService
-	AuthMW             func(http.HandlerFunc) http.HandlerFunc
-	CachePrefix        string
+	DB                *sql.DB
+	Cache             *redis.Client
+	BonusService      *service.BonusService
+	AuthMW            func(http.HandlerFunc) http.HandlerFunc
+	CachePrefix       string
 	ImageURITemplate  string
+}
+
+func (s *Server) isGameEnded() bool {
+	var endAt sql.NullTime
+	s.DB.QueryRow(`SELECT end_at FROM game WHERE id = $1`, s.BonusService.Config.GameID).Scan(&endAt)
+	return endAt.Valid && time.Now().After(endAt.Time)
 }
 
 func (s *Server) checkMiddleware(next http.HandlerFunc) http.HandlerFunc {
@@ -37,6 +44,10 @@ func (s *Server) checkMiddleware(next http.HandlerFunc) http.HandlerFunc {
 
 		checkResp, err := s.BonusService.PerformCheck(claims.ID)
 		if err != nil {
+			if s.isGameEnded() {
+				writeText(w, http.StatusServiceUnavailable, "the game has ended")
+				return
+			}
 			writeText(w, http.StatusPreconditionFailed, "please create a team first")
 			return
 		}

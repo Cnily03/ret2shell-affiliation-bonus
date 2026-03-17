@@ -8,10 +8,11 @@ interface Props {
   from: FromEntry | null;
   gameId?: number;
   loading?: boolean;
+  gameEnded?: boolean;
   onRedeem?: (inviteCode: string) => Promise<void>;
 }
 
-export default function BindInviteCard({ from, gameId, loading, onRedeem }: Props) {
+export default function BindInviteCard({ from, gameId, loading, gameEnded, onRedeem }: Props) {
   const [code, setCode] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [hint, setHint] = useState<{ text: string; type: "error" | "warn" | "info" } | null>(null);
@@ -187,14 +188,14 @@ export default function BindInviteCard({ from, gameId, loading, onRedeem }: Prop
                 autoCapitalize="characters"
                 spellCheck={false}
                 maxLength={12}
-                disabled={submitting || !onRedeem}
+                disabled={submitting || !onRedeem || gameEnded}
                 className="w-full pl-3 pr-9 py-1.25 rounded bg-input text-text-primary font-mono text-[17px] font-bold tracking-[0.12em] placeholder:font-normal focus:outline-none focus:bg-bg-accent disabled:cursor-default transition-colors"
               />
               <button
                 type="button"
                 title="粘贴"
                 onClick={handlePaste}
-                disabled={submitting || !onRedeem}
+                disabled={submitting || !onRedeem || gameEnded}
                 className="absolute right-1.5 top-1/2 -translate-y-1/2 size-7 flex items-center justify-center rounded text-text-muted hover:text-text-primary hover:bg-bg-accent cursor-pointer transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
               >
                 <span className="text-[16px] shrink-0 icon-[mdi--clipboard-outline]" />
@@ -202,7 +203,7 @@ export default function BindInviteCard({ from, gameId, loading, onRedeem }: Prop
             </div>
             <button
               type="submit"
-              disabled={!onRedeem || submitting || !code.replace(/\s+/g, "").trim()}
+              disabled={!onRedeem || submitting || !code.replace(/\s+/g, "").trim() || gameEnded}
               className="shrink-0 px-4 py-1.25 rounded bg-brand text-white font-semibold text-sm cursor-pointer transition-[filter] duration-150 hover:brightness-110 active:brightness-95 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {submitting ? "绑定中…" : "绑定"}
@@ -212,7 +213,11 @@ export default function BindInviteCard({ from, gameId, loading, onRedeem }: Prop
           <p
             className={`h-4.25 text-[12px] leading-snug truncate ${hint?.type === "error" ? "text-red" : hint?.type === "warn" ? "text-yellow" : "text-text-muted"}`}
           >
-            {hint ? hint.text : "填写其他用户的邀请码并绑定，每个账号仅能绑定一次"}
+            {gameEnded
+              ? "比赛已结束，无法绑定邀请码"
+              : hint
+                ? hint.text
+                : "填写其他用户的邀请码并绑定，每个账号仅能绑定一次"}
           </p>
         </form>
       )}

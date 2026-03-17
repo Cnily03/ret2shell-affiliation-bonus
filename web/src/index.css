@@ -106,10 +106,12 @@ body {
   text-rendering: optimizeLegibility;
 }
 
-a {
-  color: var(--text-link);
-  text-decoration: none;
-  text-underline-offset: 0.2rem;
+@layer base {
+  a {
+    color: var(--text-link);
+    text-decoration: none;
+    text-underline-offset: 0.2rem;
+  }
 }
 
 ::-webkit-scrollbar {

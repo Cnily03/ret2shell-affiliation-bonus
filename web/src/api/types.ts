@@ -21,6 +21,7 @@ export interface BonusInfo {
   game_id: number;
   bonus_score: number;
   max_score: number;
+  game_ended: boolean;
 }
 
 export interface InfoResponse {
@@ -33,6 +34,7 @@ export interface CheckTeam {
   id: number;
   name: string;
   members: number[];
+  total_bonus: number;
 }
 
 export interface CheckResponse {

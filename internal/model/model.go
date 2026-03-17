@@ -38,6 +38,7 @@ type BonusInfo struct {
 	GameID     int64 `json:"game_id"`
 	BonusScore int   `json:"bonus_score"`
 	MaxScore   int   `json:"max_score"`
+	GameEnded  bool  `json:"game_ended"`
 }
 
 type InfoResponse struct {
@@ -47,9 +48,10 @@ type InfoResponse struct {
 }
 
 type CheckTeam struct {
-	ID      int64   `json:"id"`
-	Name    string  `json:"name"`
-	Members []int64 `json:"members"`
+	ID         int64   `json:"id"`
+	Name       string  `json:"name"`
+	Members    []int64 `json:"members"`
+	TotalBonus int     `json:"total_bonus"`
 }
 
 type CheckResponse struct {

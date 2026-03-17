@@ -84,7 +84,7 @@ func (s *BonusService) GiveBonus(redeemUserID, peerUserID int64, inviteCode stri
 		actualScore = 0
 	}
 
-	now := time.Now().Unix()
+	now := time.Now().UnixMilli()
 
 	if actualScore > 0 {
 		reason := fmt.Sprintf("%s#%d invited %s#%d to participate in this game", peerAccount, peerUserID, redeemAccount, redeemUserID)
@@ -160,6 +160,16 @@ func (s *BonusService) PerformCheck(userID int64) (*model.CheckResponse, error) 
 		return nil, err
 	}
 
+	teamIDStr := strconv.FormatInt(teamID, 10)
+	var scoreEntries []model.CacheTeamScoreEntry
+	if scoreJSON, err := s.Cache.Get(context.Background(), s.cacheKey("team", teamIDStr, "score")).Result(); err == nil && scoreJSON != "" {
+		json.Unmarshal([]byte(scoreJSON), &scoreEntries)
+	}
+	var totalBonus int
+	for _, e := range scoreEntries {
+		totalBonus += e.BonusScore
+	}
+
 	return &model.CheckResponse{
 		GameID: gameID,
 		User: model.UserBrief{
@@ -168,6 +178,6 @@ func (s *BonusService) PerformCheck(userID int64) (*model.CheckResponse, error) 
 			Nickname:  nickname,
 			AvatarURI: model.BuildImageURI(avatar.String, account, s.ImageURITemplate),
 		},
-		Team: model.CheckTeam{ID: teamID, Name: teamName, Members: members},
+		Team: model.CheckTeam{ID: teamID, Name: teamName, Members: members, TotalBonus: totalBonus},
 	}, nil
 }

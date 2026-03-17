@@ -35,12 +35,14 @@ export default function InviteCode({
   maxScore,
   onRefresh,
   loading: propLoading,
+  gameEnded,
 }: {
   code: string;
   bonusScore?: number;
   maxScore?: number;
   onRefresh?: (newCode: string) => void;
   loading?: boolean;
+  gameEnded?: boolean;
 }) {
   const [refreshing, setRefreshing] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -79,7 +81,7 @@ export default function InviteCode({
           <span className={clsx("text-[14px] shrink-0", copied ? "icon-[mdi--check]" : "icon-[mdi--content-copy]")} />
           {copied ? "已复制" : "复制"}
         </Btn>
-        <Btn onClick={handleRefresh} disabled={propLoading || refreshing}>
+        <Btn onClick={handleRefresh} disabled={propLoading || refreshing || gameEnded}>
           <span
             className={clsx(
               "text-[14px] shrink-0 icon-[mdi--refresh]",
@@ -95,10 +97,10 @@ export default function InviteCode({
         bonusScore !== undefined &&
         maxScore !== undefined && (
           <p className="mt-2.5 text-[12px] text-text-muted leading-snug">
-            分享邀请码，其他用户填写后，你所在的队伍可获得
-            <span className="text-text-secondary font-medium"> {bonusScore} pts </span>
-            奖励，每支队伍累计上限
-            <span className="text-text-secondary font-medium"> {maxScore} pts</span>
+            <span>分享邀请码，其他用户填写后，你所在的队伍可获得至多 </span>
+            <span className="text-text-secondary font-medium">{bonusScore} pts</span>
+            <span> 的奖励，每支队伍累计上限 </span>
+            <span className="text-text-secondary font-medium">{maxScore} pts</span>
           </p>
         )
       )}

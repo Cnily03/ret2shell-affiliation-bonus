@@ -51,7 +51,10 @@ func (s *Server) handleInfo(w http.ResponseWriter, r *http.Request) {
 	gameID := s.BonusService.Config.GameID
 	var gameName, gameBrief string
 	var gameLogo sql.NullString
-	s.DB.QueryRow(`SELECT name, brief, logo FROM game WHERE id = $1`, gameID).Scan(&gameName, &gameBrief, &gameLogo)
+	var gameEndAt sql.NullTime
+	s.DB.QueryRow(`SELECT name, brief, logo, end_at FROM game WHERE id = $1`, gameID).Scan(&gameName, &gameBrief, &gameLogo, &gameEndAt)
+
+	gameEnded := gameEndAt.Valid && time.Now().After(gameEndAt.Time)
 
 	writeJSON(w, http.StatusOK, model.InfoResponse{
 		User: model.UserBrief{
@@ -70,6 +73,7 @@ func (s *Server) handleInfo(w http.ResponseWriter, r *http.Request) {
 			GameID:     gameID,
 			BonusScore: s.BonusService.Config.BonusScore,
 			MaxScore:   s.BonusService.Config.MaxScore,
+			GameEnded:  gameEnded,
 		},
 	})
 }
@@ -86,7 +90,7 @@ func (s *Server) handleCheck(w http.ResponseWriter, r *http.Request) {
 
 	checkResp, err := s.BonusService.PerformCheck(claims.ID)
 	if err != nil {
-		writeText(w, http.StatusPreconditionFailed, "please create a team first")
+		writeText(w, http.StatusPreconditionFailed, "please create or join a team first")
 		return
 	}
 
@@ -130,6 +134,11 @@ func (s *Server) handlePatchInviteCode(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if s.isGameEnded() {
+		writeText(w, http.StatusServiceUnavailable, "the game has ended")
+		return
+	}
+
 	log.Printf("[PATCH /api/invite_code] user=%s#%d", claims.Account, claims.ID)
 
 	ctx := context.Background()
@@ -158,6 +167,11 @@ func (s *Server) handleRedeemCode(w http.ResponseWriter, r *http.Request) {
 	check := getCheckFromContext(r)
 	if claims == nil || check == nil {
 		writeText(w, http.StatusUnauthorized, "unauthorized")
+		return
+	}
+
+	if s.isGameEnded() {
+		writeText(w, http.StatusServiceUnavailable, "the game has ended")
 		return
 	}
 
@@ -214,7 +228,7 @@ func (s *Server) handleRedeemCode(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	now := time.Now().Unix()
+	now := time.Now().UnixMilli()
 
 	invitedJSON, _ := s.Cache.Get(ctx, s.cacheKey("user", peerUserIDStr, "invited")).Result()
 	var invited []model.CacheInvitedEntry

@@ -40,7 +40,7 @@ export default function GameBanner({
           target="_blank"
           rel="noopener noreferrer"
           title="前往比赛页面"
-          className="shrink-0 flex items-center justify-center size-8 rounded-md text-text-muted! hover:text-text-primary! hover:bg-bg-accent transition-colors duration-150"
+          className="shrink-0 flex items-center justify-center size-8 rounded-md text-text-muted hover:text-text-primary hover:bg-bg-accent transition-colors duration-150"
         >
           <span className="text-[18px] icon-[mdi--open-in-new]" />
         </a>

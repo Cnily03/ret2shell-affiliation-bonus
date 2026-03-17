@@ -33,9 +33,9 @@ export function redirectToLogin(): void {
   location.replace(url);
 }
 
-// Format a unix timestamp (seconds) to a readable date string
+// Format a unix timestamp (milliseconds) to a readable date string
 export function formatTime(ts: number): string {
-  return new Date(ts * 1000).toLocaleString("zh-CN", {
+  return new Date(ts).toLocaleString("zh-CN", {
     year: "numeric",
     month: "2-digit",
     day: "2-digit",
