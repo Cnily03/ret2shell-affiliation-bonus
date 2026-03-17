@@ -1,4 +1,4 @@
-name: Build
+name: Binary
 
 on:
   push:
@@ -8,7 +8,7 @@ on:
       - 'Makefile'
       - 'go.mod'
       - 'go.sum'
-      - '.github/workflows/build.yml'
+      - '.github/workflows/binary.yml'
   pull_request:
     types:
       - review_requested
@@ -18,11 +18,11 @@ on:
       - 'Makefile'
       - 'go.mod'
       - 'go.sum'
-      - '.github/workflows/build.yml'
+      - '.github/workflows/binary.yml'
 
 jobs:
-  binary:
-    name: Binary
+  build:
+    name: Build
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
