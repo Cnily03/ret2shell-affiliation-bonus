@@ -1,0 +1,31 @@
+name: Build
+
+on:
+  push:
+  pull_request:
+    types:
+      - review_requested
+
+jobs:
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+
+      - name: Download dependencies
+        run: make deps
+
+      - name: Build
+        run: make build
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: invite-bonus
+          path: invite-bonus
+          retention-days: 1
