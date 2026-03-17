@@ -18,7 +18,7 @@ func notFound(w http.ResponseWriter, _ *http.Request) {
 func (s *Server) SetupRoutes(r *mux.Router) {
 	api := r.PathPrefix("/api").Subrouter()
 
-	api.HandleFunc("/info", s.AuthMW(s.handleInfo)).Methods(http.MethodPost)
+	api.HandleFunc("/info", s.AuthMW(s.handleInfo)).Methods(http.MethodGet)
 	api.HandleFunc("/info", methodNotAllowed)
 
 	api.HandleFunc("/check", s.AuthMW(s.handleCheck)).Methods(http.MethodPost)
