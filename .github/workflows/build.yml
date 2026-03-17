@@ -2,13 +2,27 @@ name: Build
 
 on:
   push:
+    paths:
+      - 'cmd/**'
+      - 'internal/**'
+      - 'Makefile'
+      - 'go.mod'
+      - 'go.sum'
+      - '.github/workflows/build.yml'
   pull_request:
     types:
       - review_requested
+    paths:
+      - 'cmd/**'
+      - 'internal/**'
+      - 'Makefile'
+      - 'go.mod'
+      - 'go.sum'
+      - '.github/workflows/build.yml'
 
 jobs:
-  build:
-    name: Build
+  binary:
+    name: Binary
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
