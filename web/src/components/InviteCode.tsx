@@ -31,10 +31,14 @@ function Btn({
 
 export default function InviteCode({
   code,
+  bonusScore,
+  maxScore,
   onRefresh,
   loading: propLoading,
 }: {
   code: string;
+  bonusScore?: number;
+  maxScore?: number;
   onRefresh?: (newCode: string) => void;
   loading?: boolean;
 }) {
@@ -85,6 +89,19 @@ export default function InviteCode({
           刷新
         </Btn>
       </div>
+      {propLoading ? (
+        <div className="w-72 h-2.75 rounded-sm bg-bg-accent mt-2.5" />
+      ) : (
+        bonusScore !== undefined &&
+        maxScore !== undefined && (
+          <p className="mt-2.5 text-[12px] text-text-muted leading-snug">
+            分享邀请码，其他用户填写后，你所在的队伍可获得
+            <span className="text-text-secondary font-medium"> {bonusScore} pts </span>
+            奖励，每支队伍累计上限
+            <span className="text-text-secondary font-medium"> {maxScore} pts</span>
+          </p>
+        )
+      )}
     </div>
   );
 }

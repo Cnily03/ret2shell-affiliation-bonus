@@ -10,19 +10,23 @@ export interface TeamBrief {
   name: string;
 }
 
-export interface GameResponse {
+export interface GameBrief {
   id: number;
   name: string;
   brief: string;
   logo_uri: string;
 }
 
-export interface InfoResponse {
-  id: number;
-  account: string;
-  nickname: string;
-  avatar_uri: string;
+export interface BonusInfo {
   game_id: number;
+  bonus_score: number;
+  max_score: number;
+}
+
+export interface InfoResponse {
+  user: UserBrief;
+  game: GameBrief;
+  bonus: BonusInfo;
 }
 
 export interface CheckTeam {

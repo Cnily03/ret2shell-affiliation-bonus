@@ -1,12 +1,5 @@
 import ky from "ky";
-import type {
-  CheckResponse,
-  GameResponse,
-  InfoResponse,
-  InviteCodeResponse,
-  RedeemResponse,
-  StatusResponse,
-} from "@/api/types";
+import type { CheckResponse, InfoResponse, InviteCodeResponse, RedeemResponse, StatusResponse } from "@/api/types";
 import { getApiBase, getToken, redirectToLogin } from "@/utils";
 
 const api = ky.create({
@@ -29,10 +22,6 @@ const api = ky.create({
     ],
   },
 });
-
-export async function fetchGame(): Promise<GameResponse> {
-  return api.get("game").json<GameResponse>();
-}
 
 export async function fetchInfo(): Promise<InfoResponse> {
   return api.get("info").json<InfoResponse>();

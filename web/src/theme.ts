@@ -1,10 +1,16 @@
 export type ColorScheme = "light" | "dark";
+export type ThemePreference = "light" | "dark" | "system";
 
-export function getColorScheme(): ColorScheme {
+function systemScheme(): ColorScheme {
+  return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+}
+
+export function getThemePreference(): ThemePreference {
   try {
     const raw = localStorage.getItem("theme");
     if (raw) {
       const parsed = JSON.parse(raw);
+      if (parsed.colorSchemeFollowsSystem === true) return "system";
       if (parsed.colorScheme === "light" || parsed.colorScheme === "dark") {
         return parsed.colorScheme;
       }
@@ -12,19 +18,27 @@ export function getColorScheme(): ColorScheme {
   } catch {
     // ignore
   }
-  return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+  return "system";
 }
 
-export function setColorScheme(scheme: ColorScheme) {
+export function getColorScheme(): ColorScheme {
+  const pref = getThemePreference();
+  if (pref === "light" || pref === "dark") return pref;
+  return systemScheme();
+}
+
+export function setThemePreference(pref: ThemePreference) {
   try {
     const raw = localStorage.getItem("theme");
     const obj = raw ? JSON.parse(raw) : {};
-    obj.colorScheme = scheme;
+    const followsSystem = pref === "system";
+    obj.colorSchemeFollowsSystem = followsSystem;
+    obj.colorScheme = followsSystem ? systemScheme() : pref;
     localStorage.setItem("theme", JSON.stringify(obj));
   } catch {
     // ignore
   }
-  applyTheme(scheme);
+  applyTheme(getColorScheme());
 }
 
 export function applyTheme(scheme: ColorScheme) {

@@ -27,19 +27,23 @@ func BuildImageURI(hash, alt, template string) string {
 
 // API response structs
 
-type GameResponse struct {
+type GameBrief struct {
 	ID      int64  `json:"id"`
 	Name    string `json:"name"`
 	Brief   string `json:"brief"`
 	LogoURI string `json:"logo_uri"`
 }
 
+type BonusInfo struct {
+	GameID     int64 `json:"game_id"`
+	BonusScore int   `json:"bonus_score"`
+	MaxScore   int   `json:"max_score"`
+}
+
 type InfoResponse struct {
-	ID        int64  `json:"id"`
-	Account   string `json:"account"`
-	Nickname  string `json:"nickname"`
-	AvatarURI string `json:"avatar_uri"`
-	GameID    int64  `json:"game_id"`
+	User  UserBrief `json:"user"`
+	Game  GameBrief `json:"game"`
+	Bonus BonusInfo `json:"bonus"`
 }
 
 type CheckTeam struct {

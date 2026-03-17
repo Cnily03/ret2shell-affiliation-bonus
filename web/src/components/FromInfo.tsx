@@ -6,15 +6,15 @@ const teamUrlTmpl = import.meta.env.VITE_TEAM_URL_TMPL || "/games/{game_id}/team
 
 interface Props {
   from: FromEntry | null;
-  gameId: number;
+  gameId?: number;
   loading?: boolean;
   onRedeem?: (inviteCode: string) => Promise<void>;
 }
 
-export default function BindInviteCard({ from, loading, onRedeem }: Props) {
+export default function BindInviteCard({ from, gameId, loading, onRedeem }: Props) {
   const [code, setCode] = useState("");
   const [submitting, setSubmitting] = useState(false);
-  const [hint, setHint] = useState<{ text: string; type: "error" | "info" } | null>(null);
+  const [hint, setHint] = useState<{ text: string; type: "error" | "warn" | "info" } | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
   const handlePaste = async () => {
@@ -52,20 +52,34 @@ export default function BindInviteCard({ from, loading, onRedeem }: Props) {
       setCode("");
     } catch (err) {
       let message = "绑定失败，请稍后再试";
+      let type: "error" | "warn" = "error";
       if (err && typeof err === "object" && "response" in err) {
-        try {
-          const resp = (err as { response?: Response }).response;
-          if (resp) {
-            const text = await resp.text();
-            if (text) message = text;
+        const resp = (err as { response?: Response }).response;
+        if (resp) {
+          const status = resp.status;
+          if (status === 404) {
+            message = "无效的邀请码";
+            type = "warn";
+          } else if (status === 403) {
+            message = "不能兑换自己的邀请码";
+            type = "warn";
+          } else if (status >= 400 && status < 500) {
+            type = "warn";
+            try {
+              const t = await resp.text();
+              if (t) message = t;
+            } catch {
+              /* ignore */
+            }
+          } else if (status >= 500) {
+            message = "服务器错误";
+            type = "error";
           }
-        } catch {
-          /* ignore */
         }
       } else if (err instanceof Error && err.message) {
         message = err.message;
       }
-      setHint({ text: message, type: "error" });
+      setHint({ text: message, type });
     } finally {
       setSubmitting(false);
     }
@@ -116,7 +130,7 @@ export default function BindInviteCard({ from, loading, onRedeem }: Props) {
               <span className="shrink-0">{formatTime(from.timestamp)}</span>
               <span className="text-border shrink-0">·</span>
               <a
-                href={renderUriTmpl(teamUrlTmpl, { team_id: from.peer_team.id })}
+                href={renderUriTmpl(teamUrlTmpl, { game_id: gameId ?? 0, team_id: from.peer_team.id })}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-1 text-text-link no-underline border-b border-transparent hover:border-current pb-px truncate"
@@ -196,7 +210,7 @@ export default function BindInviteCard({ from, loading, onRedeem }: Props) {
           </div>
           {/* Hint line */}
           <p
-            className={`h-4.25 text-[12px] leading-snug truncate ${hint?.type === "error" ? "text-red" : "text-text-muted"}`}
+            className={`h-4.25 text-[12px] leading-snug truncate ${hint?.type === "error" ? "text-red" : hint?.type === "warn" ? "text-yellow" : "text-text-muted"}`}
           >
             {hint ? hint.text : "填写其他用户的邀请码并绑定，每个账号仅能绑定一次"}
           </p>

@@ -1,6 +1,6 @@
-import type { InfoResponse } from "@/api/types";
+import type { UserBrief } from "@/api/types";
 
-export default function UserCard({ info, loading }: { info: InfoResponse | null; loading?: boolean }) {
+export default function UserCard({ info, loading }: { info: UserBrief | null; loading?: boolean }) {
   return (
     <div className="flex items-center gap-3.5 px-4 py-3.5 bg-card rounded-lg border border-border">
       {loading || !info ? (

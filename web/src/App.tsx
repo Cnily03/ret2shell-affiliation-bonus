@@ -1,7 +1,7 @@
 import clsx from "clsx";
 import { useEffect, useState } from "react";
-import { fetchGame, fetchInfo, getStatus, postCheck, redeemCode } from "@/api/client";
-import type { CheckResponse, GameResponse, InfoResponse, StatusResponse } from "@/api/types";
+import { fetchInfo, getStatus, postCheck, redeemCode } from "@/api/client";
+import type { CheckResponse, InfoResponse, StatusResponse } from "@/api/types";
 import BindInvite from "@/components/FromInfo";
 import GameBanner from "@/components/GameBanner";
 import InviteCode from "@/components/InviteCode";
@@ -9,38 +9,45 @@ import InvitedList from "@/components/InvitedList";
 import Spinner from "@/components/Spinner";
 import UserCard from "@/components/UserCard";
 import Warning from "@/components/Warning";
-import { getColorScheme, setColorScheme } from "@/theme";
+import type { ThemePreference } from "@/theme";
+import { getThemePreference, setThemePreference } from "@/theme";
 import { getToken, redirectToLogin, renderUriTmpl } from "@/utils";
 
 type Phase = "loading" | "no-team" | "ready" | "error";
 
+const THEME_CYCLE: ThemePreference[] = ["system", "light", "dark"];
+const THEME_ICON: Record<ThemePreference, string> = {
+  system: "icon-[mdi--theme-light-dark]",
+  light: "icon-[mdi--weather-sunny]",
+  dark: "icon-[mdi--weather-night]",
+};
+const THEME_TITLE: Record<ThemePreference, string> = {
+  system: "跟随系统",
+  light: "日间模式",
+  dark: "夜间模式",
+};
+
 function ThemeToggle() {
-  const [scheme, setScheme] = useState(getColorScheme);
+  const [pref, setPref] = useState<ThemePreference>(getThemePreference);
   const toggle = () => {
-    const next = scheme === "dark" ? "light" : "dark";
-    setColorScheme(next);
-    setScheme(next);
+    const next = THEME_CYCLE[(THEME_CYCLE.indexOf(pref) + 1) % THEME_CYCLE.length];
+    setThemePreference(next);
+    setPref(next);
   };
   return (
     <button
       type="button"
       onClick={toggle}
-      title={scheme === "dark" ? "切换亮色模式" : "切换暗色模式"}
+      title={THEME_TITLE[pref]}
       className="flex items-center p-1.5 rounded-md text-text-muted hover:text-text-primary hover:bg-bg-accent transition-colors duration-150 border-0 bg-transparent cursor-pointer"
     >
-      <span
-        className={clsx(
-          "text-[20px] shrink-0",
-          scheme === "dark" ? "icon-[mdi--weather-sunny]" : "icon-[mdi--weather-night]"
-        )}
-      />
+      <span className={clsx("text-[20px] shrink-0", THEME_ICON[pref])} />
     </button>
   );
 }
 
 export default function App() {
   const [phase, setPhase] = useState<Phase>("loading");
-  const [game, setGame] = useState<GameResponse | null>(null);
   const [info, setInfo] = useState<InfoResponse | null>(null);
   const [, setCheck] = useState<CheckResponse | null>(null);
   const [status, setStatus] = useState<StatusResponse | null>(null);
@@ -71,9 +78,9 @@ export default function App() {
     }
     async function init() {
       try {
-        const [gameData, infoData] = await Promise.all([fetchGame(), fetchInfo()]);
-        setGame(gameData);
+        const infoData = await fetchInfo();
         setInfo(infoData);
+        document.title = `邀请奖励 · ${infoData.game.name}`;
 
         let checkData: CheckResponse | null = null;
         try {
@@ -109,7 +116,7 @@ export default function App() {
 
   const header = (
     <div className="flex items-center justify-between">
-      <h1 className="text-xl font-bold text-text-primary tracking-tight">邀请奖励</h1>
+      <h1 className="text-xl font-bold text-text-primary tracking-[0.15em]">邀请奖励</h1>
       <ThemeToggle />
     </div>
   );
@@ -128,12 +135,12 @@ export default function App() {
   }
 
   if (phase === "no-team" && info) {
-    const gameUrl = renderUriTmpl(gameUrlTemplate, { game_id: info.game_id });
+    const gameUrl = renderUriTmpl(gameUrlTemplate, { game_id: info.bonus.game_id });
     return wrap(
       <>
         {header}
-        <GameBanner game={game} />
-        <UserCard info={info} />
+        <GameBanner game={info.game} gameUrl={renderUriTmpl(gameUrlTemplate, { game_id: info.bonus.game_id })} />
+        <UserCard info={info.user} />
         <Warning>
           你还没有创建队伍，请先前往
           <a href={gameUrl} target="_blank" rel="noopener noreferrer" className="mx-1 hover:underline">
@@ -152,24 +159,30 @@ export default function App() {
       {header}
 
       {/* Game banner skeleton or real */}
-      {isLoading || !game ? <GameBanner game={null} loading /> : <GameBanner game={game} />}
+      {isLoading || !info ? (
+        <GameBanner game={null} loading />
+      ) : (
+        <GameBanner game={info.game} gameUrl={renderUriTmpl(gameUrlTemplate, { game_id: info.bonus.game_id })} />
+      )}
 
       {/* User card skeleton or real */}
-      {isLoading || !info ? <UserCard info={null} loading /> : <UserCard info={info} />}
+      {isLoading || !info ? <UserCard info={null} loading /> : <UserCard info={info.user} />}
 
       {/* Bind invite card */}
       {isLoading || !info || !status ? (
         <BindInvite from={null} loading />
       ) : (
-        <BindInvite from={status.from} onRedeem={handleRedeem} />
+        <BindInvite from={status.from} gameId={info.bonus.game_id} onRedeem={handleRedeem} />
       )}
 
       {/* Invite code */}
-      {isLoading || !status ? (
+      {isLoading || !status || !info ? (
         <InviteCode code="" loading />
       ) : (
         <InviteCode
           code={status.invite_code}
+          bonusScore={info.bonus.bonus_score}
+          maxScore={info.bonus.max_score}
           onRefresh={(newCode) => setStatus((s) => (s ? { ...s, invite_code: newCode } : s))}
         />
       )}
@@ -178,7 +191,7 @@ export default function App() {
       {isLoading || !status ? (
         <InvitedList invited={[]} gameId={0} loading />
       ) : (
-        <InvitedList invited={status.invited} gameId={info!.game_id} />
+        <InvitedList invited={status.invited} gameId={info!.bonus.game_id} />
       )}
     </>
   );

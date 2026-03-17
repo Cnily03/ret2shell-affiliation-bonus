@@ -37,7 +37,7 @@ func (s *Server) cacheKey(parts ...string) string {
 	return result
 }
 
-// POST /api/info
+// GET /api/info
 func (s *Server) handleInfo(w http.ResponseWriter, r *http.Request) {
 	claims := auth.GetUserFromContext(r)
 	if claims == nil {
@@ -48,12 +48,29 @@ func (s *Server) handleInfo(w http.ResponseWriter, r *http.Request) {
 	var avatar sql.NullString
 	s.DB.QueryRow(`SELECT avatar FROM "user" WHERE id = $1`, claims.ID).Scan(&avatar)
 
+	gameID := s.BonusService.Config.GameID
+	var gameName, gameBrief string
+	var gameLogo sql.NullString
+	s.DB.QueryRow(`SELECT name, brief, logo FROM game WHERE id = $1`, gameID).Scan(&gameName, &gameBrief, &gameLogo)
+
 	writeJSON(w, http.StatusOK, model.InfoResponse{
-		ID:        claims.ID,
-		Account:   claims.Account,
-		Nickname:  claims.Nickname,
-		AvatarURI: model.BuildImageURI(avatar.String, claims.Account, s.ImageURITemplate),
-		GameID:    s.BonusService.Config.GameID,
+		User: model.UserBrief{
+			ID:        claims.ID,
+			Account:   claims.Account,
+			Nickname:  claims.Nickname,
+			AvatarURI: model.BuildImageURI(avatar.String, claims.Account, s.ImageURITemplate),
+		},
+		Game: model.GameBrief{
+			ID:      gameID,
+			Name:    gameName,
+			Brief:   gameBrief,
+			LogoURI: model.BuildImageURI(gameLogo.String, gameName, s.ImageURITemplate),
+		},
+		Bonus: model.BonusInfo{
+			GameID:     gameID,
+			BonusScore: s.BonusService.Config.BonusScore,
+			MaxScore:   s.BonusService.Config.MaxScore,
+		},
 	})
 }
 
@@ -179,7 +196,7 @@ func (s *Server) handleRedeemCode(w http.ResponseWriter, r *http.Request) {
 
 	for _, memberID := range check.Team.Members {
 		if memberID == peerUserID {
-			writeText(w, http.StatusBadRequest, "cannot redeem your own invite code")
+			writeText(w, http.StatusForbidden, "cannot redeem your own invite code")
 			return
 		}
 	}
@@ -320,22 +337,5 @@ func (s *Server) handleStatus(w http.ResponseWriter, r *http.Request) {
 		InviteCode: code,
 		Invited:    invitedEntries,
 		From:       from,
-	})
-}
-// GET /api/game
-func (s *Server) handleGame(w http.ResponseWriter, r *http.Request) {
-	gameID := s.BonusService.Config.GameID
-	var name, brief string
-	var logo sql.NullString
-	err := s.DB.QueryRow(`SELECT name, brief, logo FROM game WHERE id = $1`, gameID).Scan(&name, &brief, &logo)
-	if err != nil {
-		writeText(w, http.StatusNotFound, "not found")
-		return
-	}
-	writeJSON(w, http.StatusOK, model.GameResponse{
-		ID:      gameID,
-		Name:    name,
-		Brief:   brief,
-		LogoURI: model.BuildImageURI(logo.String, name, s.ImageURITemplate),
 	})
 }

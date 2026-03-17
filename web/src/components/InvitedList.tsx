@@ -221,7 +221,7 @@ export default function InvitedList({
                     <td className="px-3 py-2.5 text-[13px] text-text-secondary">
                       <TeamLink name={entry.bonus_team.name} teamId={entry.bonus_team.id} gameId={gameId} />
                     </td>
-                    <td className="px-3 py-2.5 text-right font-bold text-green text-sm">+{entry.bonus_score}</td>
+                    <td className="px-3 py-2.5 text-right font-bold text-green text-sm">+ {entry.bonus_score} pts</td>
                   </tr>
                 ))
               )}
@@ -268,7 +268,7 @@ export default function InvitedList({
                       <TeamLink name={t.name} teamId={t.id} gameId={gameId} />
                     </td>
                     <td className="px-3 py-2.5 text-center text-[13px] text-text-muted">{t.count}</td>
-                    <td className="px-3 py-2.5 text-right font-bold text-green text-sm">+{t.total}</td>
+                    <td className="px-3 py-2.5 text-right font-bold text-green text-sm">+ {t.total} pts</td>
                   </tr>
                 ))
               )}
