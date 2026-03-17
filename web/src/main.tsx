@@ -6,19 +6,14 @@ import { getBase } from '@/utils'
 import App from '@/App'
 import '@/index.css'
 
-// Apply theme on startup
 applyTheme(getColorScheme())
 
-// Listen for system theme changes
 window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
   applyTheme(getColorScheme())
 })
 
-// Listen for localStorage theme changes from other tabs
 window.addEventListener('storage', (e) => {
-  if (e.key === 'theme') {
-    applyTheme(getColorScheme())
-  }
+  if (e.key === 'theme') applyTheme(getColorScheme())
 })
 
 createRoot(document.getElementById('root')!).render(
