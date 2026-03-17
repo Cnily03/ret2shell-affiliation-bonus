@@ -36,6 +36,22 @@ func (s *Server) cacheKey(parts ...string) string {
 	return result
 }
 
+// POST /api/info
+func (s *Server) handleInfo(w http.ResponseWriter, r *http.Request) {
+	claims := auth.GetUserFromContext(r)
+	if claims == nil {
+		writeText(w, http.StatusUnauthorized, "unauthorized")
+		return
+	}
+
+	writeJSON(w, http.StatusOK, model.InfoResponse{
+		ID:       claims.ID,
+		Account:  claims.Account,
+		Nickname: claims.Nickname,
+		GameID:   s.BonusService.Config.GameID,
+	})
+}
+
 // POST /api/check
 func (s *Server) handleCheck(w http.ResponseWriter, r *http.Request) {
 	claims := auth.GetUserFromContext(r)

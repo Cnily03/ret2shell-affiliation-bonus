@@ -2,6 +2,13 @@ package model
 
 // API response structs
 
+type InfoResponse struct {
+	ID       int64  `json:"id"`
+	Account  string `json:"account"`
+	Nickname string `json:"nickname"`
+	GameID   int64  `json:"game_id"`
+}
+
 type CheckTeam struct {
 	ID      int64   `json:"id"`
 	Name    string  `json:"name"`
