@@ -1,0 +1,10 @@
+[ret2shell]
+config_path = "/etc/ret2shell/config.toml"
+
+[server]
+static_path = "web/dist"
+
+[bonus]
+game_id = 1
+bonus_score = 10
+max_score = 50
