@@ -10,6 +10,13 @@ export interface TeamBrief {
   name: string;
 }
 
+export interface GameResponse {
+  id: number;
+  name: string;
+  brief: string;
+  logo_uri: string;
+}
+
 export interface InfoResponse {
   id: number;
   account: string;

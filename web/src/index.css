@@ -163,3 +163,6 @@ a {
 .dc-table tbody tr:hover td {
   background: var(--hover-bg);
 }
+.dc-table tbody tr.no-hover:hover td {
+  background: transparent;
+}

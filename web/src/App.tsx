@@ -1,8 +1,9 @@
 import clsx from "clsx";
 import { useEffect, useState } from "react";
-import { fetchInfo, getStatus, postCheck, redeemCode } from "@/api/client";
-import type { CheckResponse, InfoResponse, StatusResponse } from "@/api/types";
+import { fetchGame, fetchInfo, getStatus, postCheck, redeemCode } from "@/api/client";
+import type { CheckResponse, GameResponse, InfoResponse, StatusResponse } from "@/api/types";
 import BindInvite from "@/components/FromInfo";
+import GameBanner from "@/components/GameBanner";
 import InviteCode from "@/components/InviteCode";
 import InvitedList from "@/components/InvitedList";
 import Spinner from "@/components/Spinner";
@@ -39,6 +40,7 @@ function ThemeToggle() {
 
 export default function App() {
   const [phase, setPhase] = useState<Phase>("loading");
+  const [game, setGame] = useState<GameResponse | null>(null);
   const [info, setInfo] = useState<InfoResponse | null>(null);
   const [, setCheck] = useState<CheckResponse | null>(null);
   const [status, setStatus] = useState<StatusResponse | null>(null);
@@ -69,7 +71,8 @@ export default function App() {
     }
     async function init() {
       try {
-        const infoData = await fetchInfo();
+        const [gameData, infoData] = await Promise.all([fetchGame(), fetchInfo()]);
+        setGame(gameData);
         setInfo(infoData);
 
         let checkData: CheckResponse | null = null;
@@ -129,6 +132,7 @@ export default function App() {
     return wrap(
       <>
         {header}
+        <GameBanner game={game} />
         <UserCard info={info} />
         <Warning>
           你还没有创建队伍，请先前往
@@ -146,6 +150,9 @@ export default function App() {
   return wrap(
     <>
       {header}
+
+      {/* Game banner skeleton or real */}
+      {isLoading || !game ? <GameBanner game={null} loading /> : <GameBanner game={game} />}
 
       {/* User card skeleton or real */}
       {isLoading || !info ? <UserCard info={null} loading /> : <UserCard info={info} />}

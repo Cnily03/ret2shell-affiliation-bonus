@@ -24,7 +24,7 @@ type Server struct {
 	BonusService       *service.BonusService
 	AuthMW             func(http.HandlerFunc) http.HandlerFunc
 	CachePrefix        string
-	AvatarURITemplate  string
+	ImageURITemplate  string
 }
 
 func (s *Server) checkMiddleware(next http.HandlerFunc) http.HandlerFunc {

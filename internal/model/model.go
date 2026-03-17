@@ -9,16 +9,16 @@ import (
 
 const svgFontFamily = `"Menlo", "-apple-system", "Noto Sans", "Helvetica Neue", "Helvetica", "Nimbus Sans L", "Arial", "Liberation Sans", "PingFang SC", "Hiragino Sans GB", "Noto Sans CJK SC", "Source Han Sans SC", "Source Han Sans CN", "Microsoft YaHei", "Consolas", "Courier", "monospace"`
 
-// BuildAvatarURI returns an avatar URI for the given user.
-// If avatar is non-empty, it uses the template with {avatar} replaced.
-// Otherwise, it generates an SVG data URL with the first letter of the account.
-func BuildAvatarURI(account, avatar, template string) string {
-	if avatar != "" && template != "" {
-		return strings.ReplaceAll(template, "{avatar}", avatar)
+// BuildImageURI returns an image URI for the given hash.
+// If hash is non-empty, it uses the template with {avatar} replaced by hash.
+// Otherwise, it generates an SVG data URL with the first letter of alt.
+func BuildImageURI(hash, alt, template string) string {
+	if hash != "" && template != "" {
+		return strings.ReplaceAll(template, "{hash}", hash)
 	}
 	letter := "A"
-	if account != "" {
-		r, _ := utf8.DecodeRuneInString(account)
+	if alt != "" {
+		r, _ := utf8.DecodeRuneInString(alt)
 		letter = strings.ToUpper(string(r))
 	}
 	svg := fmt.Sprintf(`<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128"><rect width="128" height="128" fill="#0991ed"/><text x="64" y="64" dy=".35em" text-anchor="middle" fill="#000" font-size="64" font-family='%s'>%s</text></svg>`, svgFontFamily, letter)
@@ -26,6 +26,13 @@ func BuildAvatarURI(account, avatar, template string) string {
 }
 
 // API response structs
+
+type GameResponse struct {
+	ID      int64  `json:"id"`
+	Name    string `json:"name"`
+	Brief   string `json:"brief"`
+	LogoURI string `json:"logo_uri"`
+}
 
 type InfoResponse struct {
 	ID        int64  `json:"id"`

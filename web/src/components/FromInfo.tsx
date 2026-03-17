@@ -198,7 +198,7 @@ export default function BindInviteCard({ from, loading, onRedeem }: Props) {
           <p
             className={`h-4.25 text-[12px] leading-snug truncate ${hint?.type === "error" ? "text-red" : "text-text-muted"}`}
           >
-            {hint ? hint.text : "填写收到的邀请码并绑定，每个账号仅能绑定一次"}
+            {hint ? hint.text : "填写其他用户的邀请码并绑定，每个账号仅能绑定一次"}
           </p>
         </form>
       )}

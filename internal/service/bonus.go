@@ -19,7 +19,7 @@ type BonusService struct {
 	Cache             *redis.Client
 	CachePrefix       string
 	Config            config.BonusConfig
-	AvatarURITemplate string
+	ImageURITemplate string
 }
 
 func (s *BonusService) cacheKey(parts ...string) string {
@@ -166,7 +166,7 @@ func (s *BonusService) PerformCheck(userID int64) (*model.CheckResponse, error) 
 			ID:        userID,
 			Account:   account,
 			Nickname:  nickname,
-			AvatarURI: model.BuildAvatarURI(account, avatar.String, s.AvatarURITemplate),
+			AvatarURI: model.BuildImageURI(avatar.String, account, s.ImageURITemplate),
 		},
 		Team: model.CheckTeam{ID: teamID, Name: teamName, Members: members},
 	}, nil

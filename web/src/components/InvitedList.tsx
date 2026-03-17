@@ -1,7 +1,6 @@
 import clsx from "clsx";
 import { useState } from "react";
 import type { InvitedEntry } from "@/api/types";
-import Toggle from "@/components/Toggle";
 import { formatTime, renderUriTmpl } from "@/utils";
 
 const teamUrlTmpl = import.meta.env.VITE_TEAM_URL_TMPL || "/games/{game_id}/teams/{team_id}";
@@ -132,7 +131,29 @@ export default function InvitedList({
             </span>
           )}
         </span>
-        <Toggle checked={!detailed} onChange={(v) => setDetailed(!v)} label={detailed ? "详细信息" : "统计信息"} />
+        <div
+          role="switch"
+          aria-checked={!detailed}
+          tabIndex={0}
+          className="inline-flex items-center gap-2 cursor-pointer select-none"
+          onClick={() => setDetailed((v) => !v)}
+          onKeyDown={(e) => {
+            if (e.key === " " || e.key === "Enter") setDetailed((v) => !v);
+          }}
+        >
+          <span className="text-xs text-text-muted">
+            <span className={detailed ? "font-bold text-text-secondary" : ""}>详细</span>
+            <span className="mx-0.5">/</span>
+            <span className={!detailed ? "font-bold text-text-secondary" : ""}>统计</span>
+          </span>
+          <div
+            className={`relative w-9 h-5 rounded-[10px] shrink-0 transition-colors duration-200 ${!detailed ? "bg-brand" : "bg-bg-accent"}`}
+          >
+            <div
+              className={`absolute top-0.5 w-4 h-4 rounded-full bg-white shadow-[0_1px_3px_rgba(0,0,0,0.3)] transition-[left] duration-200 ${!detailed ? "left-4.5" : "left-0.5"}`}
+            />
+          </div>
+        </div>
       </div>
 
       {/* Detail table */}
@@ -166,7 +187,7 @@ export default function InvitedList({
                   <SkeletonRow />
                 </>
               ) : invited.length === 0 ? (
-                <tr>
+                <tr className="no-hover">
                   <td colSpan={5} className="px-3 py-7 text-center text-text-muted text-[13px]">
                     <div className="flex flex-col items-center gap-2">
                       <span className="text-[28px] icon-[mdi--account-multiple-outline] opacity-40" />

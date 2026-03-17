@@ -34,5 +34,8 @@ func (s *Server) SetupRoutes(r *mux.Router) {
 	api.HandleFunc("/status", s.checkMiddleware(s.handleStatus)).Methods(http.MethodGet)
 	api.HandleFunc("/status", methodNotAllowed)
 
+	api.HandleFunc("/game", s.handleGame).Methods(http.MethodGet)
+	api.HandleFunc("/game", methodNotAllowed)
+
 	api.PathPrefix("/").HandlerFunc(notFound)
 }

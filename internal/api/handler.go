@@ -52,7 +52,7 @@ func (s *Server) handleInfo(w http.ResponseWriter, r *http.Request) {
 		ID:        claims.ID,
 		Account:   claims.Account,
 		Nickname:  claims.Nickname,
-		AvatarURI: model.BuildAvatarURI(claims.Account, avatar.String, s.AvatarURITemplate),
+		AvatarURI: model.BuildImageURI(avatar.String, claims.Account, s.ImageURITemplate),
 		GameID:    s.BonusService.Config.GameID,
 	})
 }
@@ -237,7 +237,7 @@ func (s *Server) handleRedeemCode(w http.ResponseWriter, r *http.Request) {
 			ID:        peerUserID,
 			Account:   peerAccount,
 			Nickname:  peerNickname,
-			AvatarURI: model.BuildAvatarURI(peerAccount, peerAvatar.String, s.AvatarURITemplate),
+			AvatarURI: model.BuildImageURI(peerAvatar.String, peerAccount, s.ImageURITemplate),
 		},
 		PeerTeam:  model.TeamBrief{ID: peerTeamID, Name: peerTeamName},
 		Timestamp: now,
@@ -283,7 +283,7 @@ func (s *Server) handleStatus(w http.ResponseWriter, r *http.Request) {
 				ID:        ci.UserID,
 				Account:   account,
 				Nickname:  nickname,
-				AvatarURI: model.BuildAvatarURI(account, avatar.String, s.AvatarURITemplate),
+				AvatarURI: model.BuildImageURI(avatar.String, account, s.ImageURITemplate),
 			},
 			InviteCode: ci.InviteCode,
 			Timestamp:  ci.Timestamp,
@@ -308,7 +308,7 @@ func (s *Server) handleStatus(w http.ResponseWriter, r *http.Request) {
 					ID:        f.PeerUserID,
 					Account:   peerAccount,
 					Nickname:  peerNickname,
-					AvatarURI: model.BuildAvatarURI(peerAccount, peerAvatar.String, s.AvatarURITemplate),
+					AvatarURI: model.BuildImageURI(peerAvatar.String, peerAccount, s.ImageURITemplate),
 				},
 				PeerTeam:  model.TeamBrief{ID: f.PeerTeamID, Name: peerTeamName},
 				Timestamp: f.Timestamp,
@@ -320,5 +320,22 @@ func (s *Server) handleStatus(w http.ResponseWriter, r *http.Request) {
 		InviteCode: code,
 		Invited:    invitedEntries,
 		From:       from,
+	})
+}
+// GET /api/game
+func (s *Server) handleGame(w http.ResponseWriter, r *http.Request) {
+	gameID := s.BonusService.Config.GameID
+	var name, brief string
+	var logo sql.NullString
+	err := s.DB.QueryRow(`SELECT name, brief, logo FROM game WHERE id = $1`, gameID).Scan(&name, &brief, &logo)
+	if err != nil {
+		writeText(w, http.StatusNotFound, "not found")
+		return
+	}
+	writeJSON(w, http.StatusOK, model.GameResponse{
+		ID:      gameID,
+		Name:    name,
+		Brief:   brief,
+		LogoURI: model.BuildImageURI(logo.String, name, s.ImageURITemplate),
 	})
 }
