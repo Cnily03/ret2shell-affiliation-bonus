@@ -3,6 +3,7 @@ config_path = "/etc/ret2shell/config.toml"
 
 [server]
 static_path = "web/dist"
+avatar_uri_template = "/api/media?hash={avatar}"
 
 [bonus]
 game_id = 1

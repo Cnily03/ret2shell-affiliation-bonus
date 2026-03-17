@@ -19,11 +19,12 @@ const checkContextKey contextKey = "check"
 
 // Server holds all dependencies for the API handlers.
 type Server struct {
-	DB           *sql.DB
-	Cache        *redis.Client
-	BonusService *service.BonusService
-	AuthMW       func(http.HandlerFunc) http.HandlerFunc
-	CachePrefix  string
+	DB                 *sql.DB
+	Cache              *redis.Client
+	BonusService       *service.BonusService
+	AuthMW             func(http.HandlerFunc) http.HandlerFunc
+	CachePrefix        string
+	AvatarURITemplate  string
 }
 
 func (s *Server) checkMiddleware(next http.HandlerFunc) http.HandlerFunc {

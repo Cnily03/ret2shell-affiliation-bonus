@@ -15,10 +15,11 @@ import (
 )
 
 type BonusService struct {
-	DB          *sql.DB
-	Cache       *redis.Client
-	CachePrefix string
-	Config      config.BonusConfig
+	DB                *sql.DB
+	Cache             *redis.Client
+	CachePrefix       string
+	Config            config.BonusConfig
+	AvatarURITemplate string
 }
 
 func (s *BonusService) cacheKey(parts ...string) string {
@@ -153,14 +154,20 @@ func (s *BonusService) PerformCheck(userID int64) (*model.CheckResponse, error) 
 	}
 
 	var account, nickname string
-	err = s.DB.QueryRow(`SELECT account, nickname FROM "user" WHERE id = $1`, userID).Scan(&account, &nickname)
+	var avatar sql.NullString
+	err = s.DB.QueryRow(`SELECT account, nickname, avatar FROM "user" WHERE id = $1`, userID).Scan(&account, &nickname, &avatar)
 	if err != nil {
 		return nil, err
 	}
 
 	return &model.CheckResponse{
 		GameID: gameID,
-		User:   model.UserBrief{ID: userID, Account: account, Nickname: nickname},
-		Team:   model.CheckTeam{ID: teamID, Name: teamName, Members: members},
+		User: model.UserBrief{
+			ID:        userID,
+			Account:   account,
+			Nickname:  nickname,
+			AvatarURI: model.BuildAvatarURI(account, avatar.String, s.AvatarURITemplate),
+		},
+		Team: model.CheckTeam{ID: teamID, Name: teamName, Members: members},
 	}, nil
 }

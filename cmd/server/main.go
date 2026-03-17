@@ -84,18 +84,20 @@ func main() {
 	cachePrefix := fmt.Sprintf("bonus:%d", cfg.App.Bonus.GameID)
 
 	bonusSvc := &service.BonusService{
-		DB:          db,
-		Cache:       rdb,
-		CachePrefix: cachePrefix,
-		Config:      cfg.App.Bonus,
+		DB:                db,
+		Cache:             rdb,
+		CachePrefix:       cachePrefix,
+		Config:            cfg.App.Bonus,
+		AvatarURITemplate: cfg.App.Server.AvatarURITemplate,
 	}
 
 	srv := &api.Server{
-		DB:           db,
-		Cache:        rdb,
-		BonusService: bonusSvc,
-		AuthMW:       auth.Middleware(cfg.Ret2Shell.Auth.SigningKey),
-		CachePrefix:  cachePrefix,
+		DB:                db,
+		Cache:             rdb,
+		BonusService:      bonusSvc,
+		AuthMW:            auth.Middleware(cfg.Ret2Shell.Auth.SigningKey),
+		CachePrefix:       cachePrefix,
+		AvatarURITemplate: cfg.App.Server.AvatarURITemplate,
 	}
 
 	r := mux.NewRouter()

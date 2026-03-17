@@ -2,6 +2,7 @@ package api
 
 import (
 	"context"
+	"database/sql"
 	"encoding/json"
 	"log"
 	"net/http"
@@ -44,11 +45,15 @@ func (s *Server) handleInfo(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	var avatar sql.NullString
+	s.DB.QueryRow(`SELECT avatar FROM "user" WHERE id = $1`, claims.ID).Scan(&avatar)
+
 	writeJSON(w, http.StatusOK, model.InfoResponse{
-		ID:       claims.ID,
-		Account:  claims.Account,
-		Nickname: claims.Nickname,
-		GameID:   s.BonusService.Config.GameID,
+		ID:        claims.ID,
+		Account:   claims.Account,
+		Nickname:  claims.Nickname,
+		AvatarURI: model.BuildAvatarURI(claims.Account, avatar.String, s.AvatarURITemplate),
+		GameID:    s.BonusService.Config.GameID,
 	})
 }
 
@@ -186,7 +191,8 @@ func (s *Server) handleRedeemCode(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var peerAccount, peerNickname string
-	if err := s.DB.QueryRow(`SELECT account, nickname FROM "user" WHERE id = $1`, peerUserID).Scan(&peerAccount, &peerNickname); err != nil {
+	var peerAvatar sql.NullString
+	if err := s.DB.QueryRow(`SELECT account, nickname, avatar FROM "user" WHERE id = $1`, peerUserID).Scan(&peerAccount, &peerNickname, &peerAvatar); err != nil {
 		writeText(w, http.StatusInternalServerError, "internal error")
 		return
 	}
@@ -227,9 +233,14 @@ func (s *Server) handleRedeemCode(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, model.RedeemResponse{
 		UserID:     claims.ID,
 		InviteCode: req.InviteCode,
-		PeerUser:   model.UserBrief{ID: peerUserID, Account: peerAccount, Nickname: peerNickname},
-		PeerTeam:   model.TeamBrief{ID: peerTeamID, Name: peerTeamName},
-		Timestamp:  now,
+		PeerUser: model.UserBrief{
+			ID:        peerUserID,
+			Account:   peerAccount,
+			Nickname:  peerNickname,
+			AvatarURI: model.BuildAvatarURI(peerAccount, peerAvatar.String, s.AvatarURITemplate),
+		},
+		PeerTeam:  model.TeamBrief{ID: peerTeamID, Name: peerTeamName},
+		Timestamp: now,
 	})
 }
 
@@ -262,12 +273,18 @@ func (s *Server) handleStatus(w http.ResponseWriter, r *http.Request) {
 	invitedEntries := make([]model.InvitedEntry, 0, len(cacheInvited))
 	for _, ci := range cacheInvited {
 		var account, nickname string
-		err := s.DB.QueryRow(`SELECT account, nickname FROM "user" WHERE id = $1`, ci.UserID).Scan(&account, &nickname)
+		var avatar sql.NullString
+		err := s.DB.QueryRow(`SELECT account, nickname, avatar FROM "user" WHERE id = $1`, ci.UserID).Scan(&account, &nickname, &avatar)
 		if err != nil {
 			continue
 		}
 		invitedEntries = append(invitedEntries, model.InvitedEntry{
-			User:       model.UserBrief{ID: ci.UserID, Account: account, Nickname: nickname},
+			User: model.UserBrief{
+				ID:        ci.UserID,
+				Account:   account,
+				Nickname:  nickname,
+				AvatarURI: model.BuildAvatarURI(account, avatar.String, s.AvatarURITemplate),
+			},
 			InviteCode: ci.InviteCode,
 			Timestamp:  ci.Timestamp,
 			BonusTeam:  model.TeamBrief{ID: ci.BonusTeamID, Name: ci.BonusTeamName},
@@ -281,14 +298,20 @@ func (s *Server) handleStatus(w http.ResponseWriter, r *http.Request) {
 		var f model.CacheFromEntry
 		if json.Unmarshal([]byte(fromJSON), &f) == nil {
 			var peerAccount, peerNickname string
-			s.DB.QueryRow(`SELECT account, nickname FROM "user" WHERE id = $1`, f.PeerUserID).Scan(&peerAccount, &peerNickname)
+			var peerAvatar sql.NullString
+			s.DB.QueryRow(`SELECT account, nickname, avatar FROM "user" WHERE id = $1`, f.PeerUserID).Scan(&peerAccount, &peerNickname, &peerAvatar)
 			var peerTeamName string
 			s.DB.QueryRow(`SELECT name FROM team WHERE id = $1`, f.PeerTeamID).Scan(&peerTeamName)
 			from = &model.FromEntry{
 				InviteCode: f.InviteCode,
-				PeerUser:   model.UserBrief{ID: f.PeerUserID, Account: peerAccount, Nickname: peerNickname},
-				PeerTeam:   model.TeamBrief{ID: f.PeerTeamID, Name: peerTeamName},
-				Timestamp:  f.Timestamp,
+				PeerUser: model.UserBrief{
+					ID:        f.PeerUserID,
+					Account:   peerAccount,
+					Nickname:  peerNickname,
+					AvatarURI: model.BuildAvatarURI(peerAccount, peerAvatar.String, s.AvatarURITemplate),
+				},
+				PeerTeam:  model.TeamBrief{ID: f.PeerTeamID, Name: peerTeamName},
+				Timestamp: f.Timestamp,
 			}
 		}
 	}

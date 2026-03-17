@@ -1,12 +1,38 @@
 package model
 
+import (
+	"encoding/base64"
+	"fmt"
+	"strings"
+	"unicode/utf8"
+)
+
+const svgFontFamily = `"Menlo", "-apple-system", "Noto Sans", "Helvetica Neue", "Helvetica", "Nimbus Sans L", "Arial", "Liberation Sans", "PingFang SC", "Hiragino Sans GB", "Noto Sans CJK SC", "Source Han Sans SC", "Source Han Sans CN", "Microsoft YaHei", "Consolas", "Courier", "monospace"`
+
+// BuildAvatarURI returns an avatar URI for the given user.
+// If avatar is non-empty, it uses the template with {avatar} replaced.
+// Otherwise, it generates an SVG data URL with the first letter of the account.
+func BuildAvatarURI(account, avatar, template string) string {
+	if avatar != "" && template != "" {
+		return strings.ReplaceAll(template, "{avatar}", avatar)
+	}
+	letter := "A"
+	if account != "" {
+		r, _ := utf8.DecodeRuneInString(account)
+		letter = strings.ToUpper(string(r))
+	}
+	svg := fmt.Sprintf(`<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128"><rect width="128" height="128" fill="#0991ed"/><text x="64" y="64" dy=".35em" text-anchor="middle" fill="#000" font-size="64" font-family='%s'>%s</text></svg>`, svgFontFamily, letter)
+	return "data:image/svg+xml;base64," + base64.StdEncoding.EncodeToString([]byte(svg))
+}
+
 // API response structs
 
 type InfoResponse struct {
-	ID       int64  `json:"id"`
-	Account  string `json:"account"`
-	Nickname string `json:"nickname"`
-	GameID   int64  `json:"game_id"`
+	ID        int64  `json:"id"`
+	Account   string `json:"account"`
+	Nickname  string `json:"nickname"`
+	AvatarURI string `json:"avatar_uri"`
+	GameID    int64  `json:"game_id"`
 }
 
 type CheckTeam struct {
@@ -30,9 +56,10 @@ type RedeemRequest struct {
 }
 
 type UserBrief struct {
-	ID       int64  `json:"id"`
-	Account  string `json:"account"`
-	Nickname string `json:"nickname"`
+	ID        int64  `json:"id"`
+	Account   string `json:"account"`
+	Nickname  string `json:"nickname"`
+	AvatarURI string `json:"avatar_uri"`
 }
 
 type TeamBrief struct {

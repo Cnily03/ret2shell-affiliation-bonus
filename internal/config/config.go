@@ -15,7 +15,8 @@ type AppConfig struct {
 }
 
 type ServerConfig struct {
-	StaticPath string `toml:"static_path"`
+	StaticPath         string `toml:"static_path"`
+	AvatarURITemplate  string `toml:"avatar_uri_template"`
 }
 
 type Ret2ShellRef struct {
