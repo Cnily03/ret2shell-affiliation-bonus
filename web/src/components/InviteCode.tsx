@@ -89,7 +89,7 @@ export default function InviteCode({
                 refreshing && "animate-[spinner-rotate_0.8s_linear_infinite]"
               )}
             />
-            刷新
+            {refreshing ? "重置中" : "重置"}
           </Btn>
         </div>
       </div>
