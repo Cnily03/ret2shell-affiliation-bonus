@@ -15,8 +15,9 @@ type AppConfig struct {
 }
 
 type ServerConfig struct {
-	StaticPath        string `toml:"static_path"`
-	ImageURITemplate  string `toml:"image_uri_template"`
+	CachePrefix      string `toml:"cache_prefix"`
+	StaticPath       string `toml:"static_path"`
+	ImageURITemplate string `toml:"image_uri_template"`
 }
 
 type Ret2ShellRef struct {

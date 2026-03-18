@@ -81,7 +81,7 @@ func main() {
 	defer rdb.Close()
 	fmt.Println("Cache connected")
 
-	cachePrefix := fmt.Sprintf("bonus:%d", cfg.App.Bonus.GameID)
+	cachePrefix := fmt.Sprintf("%s:%d", cfg.App.Server.CachePrefix, cfg.App.Bonus.GameID)
 
 	bonusSvc := &service.BonusService{
 		DB:               db,

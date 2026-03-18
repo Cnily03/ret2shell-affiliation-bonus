@@ -2,6 +2,7 @@
 config_path = "/etc/ret2shell/config.toml"
 
 [server]
+cache_prefix = "bonus"
 static_path = "web/dist"
 image_uri_template = "/api/media?hash={hash}"
 
