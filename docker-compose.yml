@@ -1,4 +1,4 @@
-name: invite-bonus
+name: aff-bonus
 
 services:
   database:
@@ -6,9 +6,9 @@ services:
     restart: unless-stopped
     environment:
       POSTGRES_PASSWORD: Development
-      POSTGRES_USER: bonus
-      POSTGRES_DB: invite-bonus
+      POSTGRES_USER: bxs
+      POSTGRES_DB: aff-bonus
     volumes:
       - ./data/database:/var/lib/postgresql/data
     ports:
-      - '15432:5432'
+      - "15432:5432"

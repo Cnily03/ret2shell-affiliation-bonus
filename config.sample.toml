@@ -5,9 +5,9 @@ config_path = "/etc/ret2shell/config.toml"
 host     = 'localhost'
 port     = 15432
 ssl_mode = 'disable'     # disable, allow, prefer, require, verify-ca, verify-full
-user     = 'bonus'
+user     = 'bxs'
 password = 'Development'
-db       = 'invite-bonus'
+db       = 'aff-bonus'
 
 [server]
 static_path        = "web/dist"

@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"time"
 
-	"invite-bonus/internal/config"
-	"invite-bonus/internal/model"
+	"affiliation-bonus/internal/config"
+	"affiliation-bonus/internal/model"
 )
 
 type BonusService struct {

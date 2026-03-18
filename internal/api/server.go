@@ -6,9 +6,9 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"invite-bonus/internal/auth"
-	"invite-bonus/internal/model"
-	"invite-bonus/internal/service"
+	"affiliation-bonus/internal/auth"
+	"affiliation-bonus/internal/model"
+	"affiliation-bonus/internal/service"
 )
 
 type contextKey string

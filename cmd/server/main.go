@@ -11,11 +11,11 @@ import (
 
 	"github.com/gorilla/mux"
 
-	"invite-bonus/internal/api"
-	"invite-bonus/internal/auth"
-	"invite-bonus/internal/config"
-	"invite-bonus/internal/service"
-	"invite-bonus/internal/store"
+	"affiliation-bonus/internal/api"
+	"affiliation-bonus/internal/auth"
+	"affiliation-bonus/internal/config"
+	"affiliation-bonus/internal/service"
+	"affiliation-bonus/internal/store"
 )
 
 func noDirList(fs http.FileSystem) http.FileSystem {

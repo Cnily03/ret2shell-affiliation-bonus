@@ -4,7 +4,7 @@ import (
 	"database/sql"
 	"time"
 
-	"invite-bonus/internal/model"
+	"affiliation-bonus/internal/model"
 )
 
 // R2SService wraps all read/write operations against the Ret2Shell database.

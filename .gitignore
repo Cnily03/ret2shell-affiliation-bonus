@@ -2,7 +2,7 @@ config.toml
 ret2shell.toml
 sing-box.json
 
-invite-bonus
+aff-server
 
 /data/
 dist/

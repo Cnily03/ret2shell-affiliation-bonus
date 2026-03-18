@@ -1,4 +1,4 @@
-module invite-bonus
+module affiliation-bonus
 
 go 1.24.2
 

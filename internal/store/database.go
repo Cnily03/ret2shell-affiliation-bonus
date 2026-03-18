@@ -6,7 +6,7 @@ import (
 
 	_ "github.com/lib/pq"
 
-	"invite-bonus/internal/config"
+	"affiliation-bonus/internal/config"
 )
 
 func ConnectR2SDatabase(cfg config.Ret2ShellDatabase) (*sql.DB, error) {

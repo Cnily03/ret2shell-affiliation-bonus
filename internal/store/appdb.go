@@ -6,7 +6,7 @@ import (
 
 	_ "github.com/lib/pq"
 
-	"invite-bonus/internal/config"
+	"affiliation-bonus/internal/config"
 )
 
 // ConnectAppDatabase connects to the application's own PostgreSQL database.

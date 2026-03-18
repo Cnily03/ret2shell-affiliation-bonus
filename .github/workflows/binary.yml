@@ -40,6 +40,6 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-artifact@v7
         with:
-          name: invite-bonus
-          path: invite-bonus
+          name: aff-server
+          path: aff-server
           retention-days: 1

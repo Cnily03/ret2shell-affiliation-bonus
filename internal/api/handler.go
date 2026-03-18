@@ -8,8 +8,8 @@ import (
 
 	gonanoid "github.com/jaevor/go-nanoid"
 
-	"invite-bonus/internal/auth"
-	"invite-bonus/internal/model"
+	"affiliation-bonus/internal/auth"
+	"affiliation-bonus/internal/model"
 )
 
 const nanoidAlphabet = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ"

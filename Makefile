@@ -1,4 +1,4 @@
-BINARY  := invite-bonus
+BINARY  := aff-server
 CMD     := ./cmd/server
 GOFLAGS ?=
 

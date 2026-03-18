@@ -1,8 +1,8 @@
 module.exports = {
   apps: [
     {
-      name: "invite-bonus",
-      script: "./invite-bonus",
+      name: "affiliation-bonus",
+      script: "./affiliation-bonus",
       args: "-p 8000",
       cwd: __dirname,
       interpreter: "none",
