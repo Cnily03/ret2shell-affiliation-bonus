@@ -143,7 +143,7 @@ export default function App() {
   );
 
   const wrap = (children: React.ReactNode) => (
-    <div className="max-w-180 mx-auto px-4 py-7 flex flex-col gap-3">{children}</div>
+    <div className="max-w-180 mx-auto px-3 sm:px-4 py-5 sm:py-7 flex flex-col gap-3">{children}</div>
   );
 
   if (phase === "error") {

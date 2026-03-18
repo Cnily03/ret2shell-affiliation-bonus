@@ -1,4 +1,5 @@
 import type { GameBrief } from "@/api/types";
+import Avatar from "@/components/Avatar";
 
 export default function GameBanner({
   game,
@@ -14,12 +15,7 @@ export default function GameBanner({
       {loading || !game ? (
         <div className="w-11 h-11 rounded-lg bg-bg-accent shrink-0" />
       ) : (
-        <img
-          src={game.logo_uri}
-          alt=""
-          crossOrigin="anonymous"
-          className="w-11 h-11 rounded-lg object-cover shrink-0"
-        />
+        <Avatar src={game.logo_uri} rounded="rounded-lg" />
       )}
       <div className="flex flex-col gap-0.5 min-w-0 flex-1">
         {loading || !game ? (

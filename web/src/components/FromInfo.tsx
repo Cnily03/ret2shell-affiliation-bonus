@@ -1,5 +1,6 @@
 import { type FormEvent, useRef, useState } from "react";
 import type { FromEntry } from "@/api/types";
+import Avatar from "@/components/Avatar";
 import { formatTime, renderUriTmpl } from "@/utils";
 
 const teamUrlTmpl = import.meta.env.VITE_TEAM_URL_TMPL || "/games/{game_id}/teams/{team_id}";
@@ -62,7 +63,7 @@ export default function BindInviteCard({ from, gameId, loading, gameEnded, onRed
             message = "无效的邀请码";
             type = "warn";
           } else if (status === 403) {
-            message = "不能兑换自己的邀请码";
+            message = "不能绑定自己的邀请码";
             type = "warn";
           } else if (status >= 400 && status < 500) {
             type = "warn";
@@ -91,8 +92,9 @@ export default function BindInviteCard({ from, gameId, loading, gameEnded, onRed
   return (
     <div className="px-4 py-3.5 bg-card rounded-lg border border-border">
       {/* Section label */}
-      <div className="flex items-center justify-between mb-2.5">
+      <div className="flex items-center justify-end gap-2 flex-wrap mb-2.5">
         <div className="text-[11px] font-bold uppercase tracking-[0.06em] text-text-muted">绑定邀请码</div>
+        <span className="flex-1" />
         {isBound && (
           <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-green bg-bg-accent rounded-full px-2 py-0.5">
             <span className="text-[12px] shrink-0 icon-[mdi--check-circle-outline]" />
@@ -113,9 +115,9 @@ export default function BindInviteCard({ from, gameId, loading, gameEnded, onRed
         </div>
       ) : isBound && from ? (
         /* ── Bound state: left = input+hint, right = inviter user info ── */
-        <div className="flex gap-3 items-start">
+        <div className="flex flex-col sm:flex-row gap-3 items-start">
           {/* Left col */}
-          <div className="flex-1 flex flex-col gap-2 min-w-0">
+          <div className="w-full sm:flex-1 flex flex-col gap-2 min-w-0">
             <div className="relative">
               <input
                 ref={inputRef}
@@ -126,30 +128,27 @@ export default function BindInviteCard({ from, gameId, loading, gameEnded, onRed
                 className="w-full pl-3 pr-3 py-1.25 rounded bg-input text-text-primary font-mono text-[17px] font-bold tracking-[0.12em] focus:outline-none opacity-50 cursor-not-allowed transition-colors"
               />
             </div>
-            <div className="flex items-center gap-2 h-4.25 text-[12px] leading-snug text-text-muted min-w-0">
-              <span className="icon-[mdi--clock-outline] text-[12px] shrink-0" />
-              <span className="shrink-0">{formatTime(from.timestamp)}</span>
+            <div className="flex items-center flex-wrap gap-x-2 gap-y-1 text-[12px] leading-snug text-text-muted min-w-0">
+              <span className="inline-flex items-center gap-1">
+                <span className="icon-[mdi--clock-outline] text-[12px] shrink-0" />
+                <span>{formatTime(from.timestamp)}</span>
+              </span>
               <span className="text-border shrink-0">·</span>
               <a
                 href={renderUriTmpl(teamUrlTmpl, { game_id: gameId ?? 0, team_id: from.peer_team.id })}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-1 text-text-link no-underline border-b border-transparent hover:border-current pb-px truncate"
+                className="inline-flex items-center gap-1 text-text-link no-underline border-b border-transparent hover:border-current pb-px min-w-0"
               >
                 <span className="icon-[mdi--account-multiple] text-[12px] shrink-0" />
-                <span className="truncate">{from.peer_team.name}</span>
+                <span>{from.peer_team.name}</span>
               </a>
             </div>
           </div>
 
           {/* Right col: inviter */}
-          <div className="flex items-center gap-3.5 shrink-0">
-            <img
-              src={from.peer_user.avatar_uri}
-              alt=""
-              crossOrigin="anonymous"
-              className="w-11 h-11 rounded-full object-cover shrink-0"
-            />
+          <div className="flex items-center gap-3.5 sm:shrink-0">
+            <Avatar src={from.peer_user.avatar_uri} />
             <div className="flex flex-col gap-0.5">
               <span className="text-[15px] font-semibold text-text-primary whitespace-nowrap">
                 {from.peer_user.nickname}
@@ -161,9 +160,9 @@ export default function BindInviteCard({ from, gameId, loading, gameEnded, onRed
       ) : (
         /* ── Unbound state: top = input row, bottom = hint ── */
         <form onSubmit={handleSubmit} className="flex flex-col gap-2">
-          {/* Input + paste + bind button on one line */}
-          <div className="flex gap-2 items-center">
-            <div className="relative flex-1 min-w-0">
+          {/* Input + paste + bind button on one line; wraps to two lines on very narrow screens */}
+          <div className="flex flex-wrap gap-2 items-center">
+            <div className="relative flex-1 min-w-32">
               <input
                 ref={inputRef}
                 type="text"
@@ -204,14 +203,14 @@ export default function BindInviteCard({ from, gameId, loading, gameEnded, onRed
             <button
               type="submit"
               disabled={!onRedeem || submitting || !code.replace(/\s+/g, "").trim() || gameEnded}
-              className="shrink-0 px-4 py-1.25 rounded bg-brand text-white font-semibold text-sm cursor-pointer transition-[filter] duration-150 hover:brightness-110 active:brightness-95 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="shrink-0 w-full sm:w-auto px-4 py-1.25 rounded bg-brand text-white font-semibold text-sm cursor-pointer transition-[filter] duration-150 hover:brightness-110 active:brightness-95 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {submitting ? "绑定中…" : "绑定"}
             </button>
           </div>
           {/* Hint line */}
           <p
-            className={`h-4.25 text-[12px] leading-snug truncate ${hint?.type === "error" ? "text-red" : hint?.type === "warn" ? "text-yellow" : "text-text-muted"}`}
+            className={`text-[12px] leading-snug ${hint?.type === "error" ? "text-red" : hint?.type === "warn" ? "text-yellow" : "text-text-muted"}`}
           >
             {gameEnded
               ? "比赛已结束，无法绑定邀请码"

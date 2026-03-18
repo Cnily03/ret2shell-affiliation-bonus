@@ -1,6 +1,12 @@
 // Replace {key} placeholders in a URI template with values from context
 export function renderUriTmpl(tmpl: string, context: Record<string, string | number>): string {
-  return tmpl.replace(/\{(\w+)\}/g, (_, key) => String(context[key] ?? ""));
+  return tmpl.replace(/\{(\w+)\}/g, (m, key) => {
+    // biome-ignore lint/suspicious/noPrototypeBuiltins: ES2020
+    if (Object.prototype.hasOwnProperty.call(context, key)) {
+      return String(context[key]);
+    }
+    return m;
+  });
 }
 
 // Get the vite base path (from vite's built-in BASE_URL)

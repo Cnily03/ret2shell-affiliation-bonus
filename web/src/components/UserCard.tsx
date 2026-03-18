@@ -1,5 +1,6 @@
 import clsx from "clsx";
 import type { CheckTeam, UserBrief } from "@/api/types";
+import Avatar from "@/components/Avatar";
 
 export default function UserCard({
   info,
@@ -17,12 +18,7 @@ export default function UserCard({
       {loading || !info ? (
         <div className="w-11 h-11 rounded-full bg-bg-accent shrink-0" />
       ) : (
-        <img
-          src={info.avatar_uri}
-          alt=""
-          crossOrigin="anonymous"
-          className="w-11 h-11 rounded-full object-cover shrink-0"
-        />
+        <Avatar src={info.avatar_uri} />
       )}
       <div className="flex flex-col gap-0.5 min-w-0">
         {loading || !info ? (
@@ -43,12 +39,13 @@ export default function UserCard({
   const showTeam = !loading && team;
 
   return (
-    <div className="flex items-stretch gap-0 bg-card rounded-lg border border-border overflow-hidden">
+    <div className="flex flex-col sm:flex-row items-stretch gap-0 bg-card rounded-lg border border-border overflow-hidden">
       <div className="flex items-center gap-3.5 px-4 py-3.5 min-w-0 flex-1">{userCell}</div>
       {showTeam && (
         <>
-          <div className="w-px bg-border shrink-0" />
-          <div className="flex items-center gap-3 px-4 py-3.5 min-w-0 flex-1 max-w-[50%]">
+          <div className="hidden sm:block w-px bg-border shrink-0" />
+          <div className="sm:hidden h-px bg-border" />
+          <div className="flex items-center gap-3 px-4 py-3.5 min-w-0 flex-1 sm:max-w-[50%]">
             <div className="w-11 h-11 rounded-full bg-bg-accent flex items-center justify-center shrink-0">
               <span className="icon-[mdi--account-group] text-[22px] text-text-muted" />
             </div>

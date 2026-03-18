@@ -50,6 +50,7 @@
   --shadow: rgba(0, 0, 0, 0.4);
   --scrollbar-track: #1e1f22;
   --scrollbar-thumb: #3f4147;
+  --selection-bg: rgba(38, 79, 120, 0.5);
 }
 
 :root[data-theme="light"] {
@@ -73,6 +74,7 @@
   --shadow: rgba(0, 0, 0, 0.08);
   --scrollbar-track: #e3e5e8;
   --scrollbar-thumb: #c4c9d4;
+  --selection-bg: rgba(173, 214, 255, 0.5);
 }
 
 *,
@@ -111,6 +113,11 @@ body {
     color: var(--text-link);
     text-decoration: none;
     text-underline-offset: 0.2rem;
+  }
+
+  ::selection {
+    background-color: var(--selection-bg);
+    color: inherit;
   }
 }
 

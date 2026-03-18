@@ -1,6 +1,7 @@
 import clsx from "clsx";
 import { useState } from "react";
 import type { InvitedEntry } from "@/api/types";
+import Avatar from "@/components/Avatar";
 import { formatTime, renderUriTmpl } from "@/utils";
 
 const teamUrlTmpl = import.meta.env.VITE_TEAM_URL_TMPL || "/games/{game_id}/teams/{team_id}";
@@ -122,7 +123,7 @@ export default function InvitedList({
   return (
     <div className="bg-card rounded-lg border border-border overflow-hidden">
       {/* Header */}
-      <div className="flex items-center justify-between px-4 py-3 border-b border-border">
+      <div className="flex items-center justify-end px-4 py-3 border-b border-border gap-2 flex-wrap">
         <span className="text-[11px] font-bold uppercase tracking-[0.06em] text-text-muted">
           已邀请用户
           {!loading && invited.length > 0 && (
@@ -131,6 +132,7 @@ export default function InvitedList({
             </span>
           )}
         </span>
+        <span className="flex-1" />
         <div
           role="switch"
           aria-checked={!detailed}
@@ -165,10 +167,10 @@ export default function InvitedList({
                 <th className="px-3 py-2 text-left text-[11px] font-bold uppercase tracking-[0.05em] text-text-muted whitespace-nowrap">
                   受邀用户
                 </th>
-                <th className="px-3 py-2 text-left text-[11px] font-bold uppercase tracking-[0.05em] text-text-muted whitespace-nowrap">
+                <th className="hidden sm:table-cell px-3 py-2 text-left text-[11px] font-bold uppercase tracking-[0.05em] text-text-muted whitespace-nowrap">
                   绑定时间
                 </th>
-                <th className="px-3 py-2 text-left text-[11px] font-bold uppercase tracking-[0.05em] text-text-muted whitespace-nowrap">
+                <th className="hidden sm:table-cell px-3 py-2 text-left text-[11px] font-bold uppercase tracking-[0.05em] text-text-muted whitespace-nowrap">
                   邀请码
                 </th>
                 <th className="px-3 py-2 text-left text-[11px] font-bold uppercase tracking-[0.05em] text-text-muted whitespace-nowrap">
@@ -200,22 +202,17 @@ export default function InvitedList({
                   <tr key={entry.user.id}>
                     <td className="px-3 py-2.5">
                       <div className="flex items-center gap-2.5">
-                        <img
-                          src={entry.user.avatar_uri}
-                          alt=""
-                          crossOrigin="anonymous"
-                          className="w-8 h-8 rounded-full object-cover shrink-0"
-                        />
+                        <Avatar src={entry.user.avatar_uri} size="w-8 h-8" />
                         <div>
                           <div className="text-sm font-semibold text-text-primary">{entry.user.nickname}</div>
                           <div className="text-[11px] text-text-muted">@{entry.user.account}</div>
                         </div>
                       </div>
                     </td>
-                    <td className="px-3 py-2.5 text-[12px] text-text-muted whitespace-nowrap">
+                    <td className="hidden sm:table-cell px-3 py-2.5 text-[12px] text-text-muted whitespace-nowrap">
                       {formatTime(entry.timestamp)}
                     </td>
-                    <td className="px-3 py-2.5">
+                    <td className="hidden sm:table-cell px-3 py-2.5">
                       <InviteToken code={entry.invite_code} />
                     </td>
                     <td className="px-3 py-2.5 text-[13px] text-text-secondary">

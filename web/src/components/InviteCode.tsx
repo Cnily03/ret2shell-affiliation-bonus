@@ -73,23 +73,25 @@ export default function InviteCode({
         {propLoading ? (
           <div className="w-35 h-8.5 rounded bg-bg-accent" />
         ) : (
-          <code className="font-mono text-[17px] font-bold tracking-[0.12em] text-text-primary px-3 py-1.25 bg-input rounded select-all">
+          <code className="font-mono text-[17px] font-bold tracking-[0.12em] text-text-primary px-3 py-1.25 bg-input rounded select-all min-w-0 max-w-full overflow-x-auto">
             {code}
           </code>
         )}
-        <Btn variant="brand" onClick={handleCopy} disabled={propLoading || !code}>
-          <span className={clsx("text-[14px] shrink-0", copied ? "icon-[mdi--check]" : "icon-[mdi--content-copy]")} />
-          {copied ? "已复制" : "复制"}
-        </Btn>
-        <Btn onClick={handleRefresh} disabled={propLoading || refreshing || gameEnded}>
-          <span
-            className={clsx(
-              "text-[14px] shrink-0 icon-[mdi--refresh]",
-              refreshing && "animate-[spinner-rotate_0.8s_linear_infinite]"
-            )}
-          />
-          刷新
-        </Btn>
+        <div className="flex items-center gap-2 flex-wrap">
+          <Btn variant="brand" onClick={handleCopy} disabled={propLoading || !code}>
+            <span className={clsx("text-[14px] shrink-0", copied ? "icon-[mdi--check]" : "icon-[mdi--content-copy]")} />
+            {copied ? "已复制" : "复制"}
+          </Btn>
+          <Btn onClick={handleRefresh} disabled={propLoading || refreshing || gameEnded}>
+            <span
+              className={clsx(
+                "text-[14px] shrink-0 icon-[mdi--refresh]",
+                refreshing && "animate-[spinner-rotate_0.8s_linear_infinite]"
+              )}
+            />
+            刷新
+          </Btn>
+        </div>
       </div>
       {propLoading ? (
         <div className="w-72 h-2.75 rounded-sm bg-bg-accent mt-2.5" />
