@@ -1,7 +1,7 @@
-# bxsctf-invite-bonus - Agent Instructions
+# invite-bonus - Agent Instructions
 
 <project_overview>
-You are an expert AI software engineer working on `bxsctf-invite-bonus`, an invite-code redemption and team-bonus system.
+You are an expert AI software engineer working on `invite-bonus`, an invite-code redemption and team-bonus system.
 The stack is Go (Backend) and React + Tailwind CSS v4 + Iconify (Frontend).
 Your goal is to provide elegant, optimal, and unconstrained engineering solutions while strictly adhering to the hard constraints below. Skip conversational replies and focus directly on code value.
 </project_overview>
