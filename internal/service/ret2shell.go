@@ -4,7 +4,7 @@ import (
 	"database/sql"
 	"time"
 
-	"bxsctf-invite-bonus/internal/model"
+	"invite-bonus/internal/model"
 )
 
 // R2SService wraps all read/write operations against the Ret2Shell database.

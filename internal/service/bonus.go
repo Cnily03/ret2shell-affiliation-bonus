@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"time"
 
-	"bxsctf-invite-bonus/internal/config"
-	"bxsctf-invite-bonus/internal/model"
+	"invite-bonus/internal/config"
+	"invite-bonus/internal/model"
 )
 
 type BonusService struct {

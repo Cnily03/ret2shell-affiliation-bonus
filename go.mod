@@ -1,4 +1,4 @@
-module bxsctf-invite-bonus
+module invite-bonus
 
 go 1.24.2
 

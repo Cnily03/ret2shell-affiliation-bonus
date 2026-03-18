@@ -6,7 +6,7 @@ import (
 
 	_ "github.com/lib/pq"
 
-	"bxsctf-invite-bonus/internal/config"
+	"invite-bonus/internal/config"
 )
 
 // ConnectAppDatabase connects to the application's own PostgreSQL database.

@@ -6,9 +6,9 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"bxsctf-invite-bonus/internal/auth"
-	"bxsctf-invite-bonus/internal/model"
-	"bxsctf-invite-bonus/internal/service"
+	"invite-bonus/internal/auth"
+	"invite-bonus/internal/model"
+	"invite-bonus/internal/service"
 )
 
 type contextKey string
