@@ -13,6 +13,7 @@
   "files": {
     "includes": [
       "src/**/*.{ts,tsx,js,mts,mjs,cjs,jsx,css,scss,json,yml,yaml}",
+      "vite.config.ts",
       "!**/.DS_Store",
       "!**/node_modules",
       "!**/.env",
