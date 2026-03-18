@@ -99,7 +99,7 @@ export default function InviteCode({
         bonusScore !== undefined &&
         maxScore !== undefined && (
           <p className="mt-2.5 text-[12px] text-text-muted leading-snug">
-            <span>分享邀请码，其他用户填写后，你所在的队伍可获得至多 </span>
+            <span>分享邀请码，其他用户填写并绑定后，你所在的队伍可获得至多 </span>
             <span className="text-text-secondary font-medium">{bonusScore} pts</span>
             <span> 的奖励，每支队伍累计上限 </span>
             <span className="text-text-secondary font-medium">{maxScore} pts</span>
