@@ -5,9 +5,6 @@ import (
 	"database/sql"
 	"encoding/json"
 	"net/http"
-	"time"
-
-	"github.com/redis/go-redis/v9"
 
 	"bxsctf-invite-bonus/internal/auth"
 	"bxsctf-invite-bonus/internal/model"
@@ -20,18 +17,14 @@ const checkContextKey contextKey = "check"
 
 // Server holds all dependencies for the API handlers.
 type Server struct {
-	DB                *sql.DB
-	Cache             *redis.Client
-	BonusService      *service.BonusService
-	AuthMW            func(http.HandlerFunc) http.HandlerFunc
-	CachePrefix       string
-	ImageURITemplate  string
+	R2S          *service.R2SService
+	AppDB        *sql.DB
+	BonusService *service.BonusService
+	AuthMW       func(http.HandlerFunc) http.HandlerFunc
 }
 
 func (s *Server) isGameEnded() bool {
-	var endAt sql.NullTime
-	s.DB.QueryRow(`SELECT end_at FROM game WHERE id = $1`, s.BonusService.Config.GameID).Scan(&endAt)
-	return endAt.Valid && time.Now().After(endAt.Time)
+	return s.R2S.IsGameEnded(s.BonusService.Config.GameID)
 }
 
 func (s *Server) checkMiddleware(next http.HandlerFunc) http.HandlerFunc {

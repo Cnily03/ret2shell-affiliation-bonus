@@ -4,6 +4,7 @@ sing-box.json
 
 invite-bonus
 
+/data/
 dist/
 node_modules/
 .DS_Store/

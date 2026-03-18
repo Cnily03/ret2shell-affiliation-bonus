@@ -65,39 +65,35 @@ func main() {
 		os.Exit(1)
 	}
 
-	db, err := store.ConnectDatabase(cfg.Ret2Shell.Database)
+	r2sDB, err := store.ConnectR2SDatabase(cfg.Ret2Shell.Database)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}
-	defer db.Close()
-	fmt.Println("Database connected")
+	defer r2sDB.Close()
+	fmt.Println("Ret2Shell database connected")
 
-	rdb, err := store.ConnectCache(cfg.Ret2Shell.Cache.URL)
+	appDB, err := store.ConnectAppDatabase(cfg.App.Database)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}
-	defer rdb.Close()
-	fmt.Println("Cache connected")
+	defer appDB.Close()
+	fmt.Println("App database connected")
 
-	cachePrefix := fmt.Sprintf("%s:%d", cfg.App.Server.CachePrefix, cfg.App.Bonus.GameID)
+	r2sSvc := service.NewR2SService(r2sDB, cfg.App.Server.ImageURITemplate)
 
 	bonusSvc := &service.BonusService{
-		DB:               db,
-		Cache:            rdb,
-		CachePrefix:      cachePrefix,
-		Config:           cfg.App.Bonus,
-		ImageURITemplate: cfg.App.Server.ImageURITemplate,
+		R2S:    r2sSvc,
+		AppDB:  appDB,
+		Config: cfg.App.Bonus,
 	}
 
 	srv := &api.Server{
-		DB:               db,
-		Cache:            rdb,
-		BonusService:     bonusSvc,
-		AuthMW:           auth.Middleware(cfg.Ret2Shell.Auth.SigningKey),
-		CachePrefix:      cachePrefix,
-		ImageURITemplate: cfg.App.Server.ImageURITemplate,
+		R2S:          r2sSvc,
+		AppDB:        appDB,
+		BonusService: bonusSvc,
+		AuthMW:       auth.Middleware(cfg.Ret2Shell.Auth.SigningKey),
 	}
 
 	r := mux.NewRouter()

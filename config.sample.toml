@@ -1,12 +1,19 @@
 [ret2shell]
 config_path = "/etc/ret2shell/config.toml"
 
+[database]
+host     = 'localhost'
+port     = 15432
+ssl_mode = 'disable'     # disable, allow, prefer, require, verify-ca, verify-full
+user     = 'bonus'
+password = 'Development'
+db       = 'invite-bonus'
+
 [server]
-cache_prefix = "bonus"
-static_path = "web/dist"
+static_path        = "web/dist"
 image_uri_template = "/api/media?hash={hash}"
 
 [bonus]
-game_id = 1
+game_id     = 1
 bonus_score = 10
-max_score = 50
+max_score   = 50

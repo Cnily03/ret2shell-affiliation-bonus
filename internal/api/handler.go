@@ -1,16 +1,12 @@
 package api
 
 import (
-	"context"
-	"database/sql"
 	"encoding/json"
 	"log"
 	"net/http"
-	"strconv"
 	"time"
 
 	gonanoid "github.com/jaevor/go-nanoid"
-	"github.com/redis/go-redis/v9"
 
 	"bxsctf-invite-bonus/internal/auth"
 	"bxsctf-invite-bonus/internal/model"
@@ -29,14 +25,6 @@ func init() {
 	}
 }
 
-func (s *Server) cacheKey(parts ...string) string {
-	result := s.CachePrefix
-	for _, p := range parts {
-		result += ":" + p
-	}
-	return result
-}
-
 // GET /api/info
 func (s *Server) handleInfo(w http.ResponseWriter, r *http.Request) {
 	claims := auth.GetUserFromContext(r)
@@ -45,30 +33,15 @@ func (s *Server) handleInfo(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var avatar sql.NullString
-	s.DB.QueryRow(`SELECT avatar FROM "user" WHERE id = $1`, claims.ID).Scan(&avatar)
+	userBrief, _ := s.R2S.GetUser(claims.ID)
 
 	gameID := s.BonusService.Config.GameID
-	var gameName, gameBrief string
-	var gameLogo sql.NullString
-	var gameEndAt sql.NullTime
-	s.DB.QueryRow(`SELECT name, brief, logo, end_at FROM game WHERE id = $1`, gameID).Scan(&gameName, &gameBrief, &gameLogo, &gameEndAt)
-
-	gameEnded := gameEndAt.Valid && time.Now().After(gameEndAt.Time)
+	gameRow := s.R2S.GetGame(gameID)
+	gameEnded := gameRow.EndAt.Valid && time.Now().After(gameRow.EndAt.Time)
 
 	writeJSON(w, http.StatusOK, model.InfoResponse{
-		User: model.UserBrief{
-			ID:        claims.ID,
-			Account:   claims.Account,
-			Nickname:  claims.Nickname,
-			AvatarURI: model.BuildImageURI(avatar.String, claims.Account, s.ImageURITemplate),
-		},
-		Game: model.GameBrief{
-			ID:      gameID,
-			Name:    gameName,
-			Brief:   gameBrief,
-			LogoURI: model.BuildImageURI(gameLogo.String, gameName, s.ImageURITemplate),
-		},
+		User: userBrief,
+		Game: gameRow.GameBrief,
 		Bonus: model.BonusInfo{
 			GameID:     gameID,
 			BonusScore: s.BonusService.Config.BonusScore,
@@ -105,20 +78,25 @@ func (s *Server) handleGetInviteCode(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	ctx := context.Background()
-	userIDStr := strconv.FormatInt(claims.ID, 10)
+	gameID := s.BonusService.Config.GameID
 
-	code, err := s.Cache.Get(ctx, s.cacheKey("user", userIDStr, "code")).Result()
-	if err == nil && code != "" {
+	var code string
+	err := s.AppDB.QueryRow(
+		`SELECT code FROM invite_code WHERE user_id = $1 AND game_id = $2`,
+		claims.ID, gameID,
+	).Scan(&code)
+	if err == nil {
 		writeJSON(w, http.StatusOK, model.InviteCodeResponse{InviteCode: code})
 		return
 	}
 
 	code = generateNanoID()
-	pipe := s.Cache.Pipeline()
-	pipe.Set(ctx, s.cacheKey("user", userIDStr, "code"), code, 0)
-	pipe.Set(ctx, s.cacheKey("invite_code", code), userIDStr, 0)
-	if _, err := pipe.Exec(ctx); err != nil {
+	_, err = s.AppDB.Exec(
+		`INSERT INTO invite_code (user_id, game_id, code) VALUES ($1, $2, $3)
+		 ON CONFLICT (user_id, game_id) DO UPDATE SET code = EXCLUDED.code`,
+		claims.ID, gameID, code,
+	)
+	if err != nil {
 		writeText(w, http.StatusInternalServerError, "internal error")
 		return
 	}
@@ -141,19 +119,15 @@ func (s *Server) handlePatchInviteCode(w http.ResponseWriter, r *http.Request) {
 
 	log.Printf("[PATCH /api/invite_code] user=%s#%d", claims.Account, claims.ID)
 
-	ctx := context.Background()
-	userIDStr := strconv.FormatInt(claims.ID, 10)
-
-	oldCode, err := s.Cache.Get(ctx, s.cacheKey("user", userIDStr, "code")).Result()
-	if err == nil && oldCode != "" {
-		s.Cache.Del(ctx, s.cacheKey("invite_code", oldCode))
-	}
-
+	gameID := s.BonusService.Config.GameID
 	code := generateNanoID()
-	pipe := s.Cache.Pipeline()
-	pipe.Set(ctx, s.cacheKey("user", userIDStr, "code"), code, 0)
-	pipe.Set(ctx, s.cacheKey("invite_code", code), userIDStr, 0)
-	if _, err := pipe.Exec(ctx); err != nil {
+
+	_, err := s.AppDB.Exec(
+		`INSERT INTO invite_code (user_id, game_id, code) VALUES ($1, $2, $3)
+		 ON CONFLICT (user_id, game_id) DO UPDATE SET code = EXCLUDED.code`,
+		claims.ID, gameID, code,
+	)
+	if err != nil {
 		writeText(w, http.StatusInternalServerError, "internal error")
 		return
 	}
@@ -177,10 +151,14 @@ func (s *Server) handleRedeemCode(w http.ResponseWriter, r *http.Request) {
 
 	log.Printf("[POST /api/redeem_code] user=%s#%d", claims.Account, claims.ID)
 
-	ctx := context.Background()
-	userIDStr := strconv.FormatInt(claims.ID, 10)
+	gameID := s.BonusService.Config.GameID
 
-	_, err := s.Cache.Get(ctx, s.cacheKey("user", userIDStr, "from")).Result()
+	// Check if the user already redeemed.
+	var exists int
+	err := s.AppDB.QueryRow(
+		`SELECT 1 FROM redeem_record WHERE user_id = $1 AND game_id = $2`,
+		claims.ID, gameID,
+	).Scan(&exists)
 	if err == nil {
 		writeText(w, http.StatusConflict, "you already redeemed an invite code")
 		return
@@ -192,17 +170,12 @@ func (s *Server) handleRedeemCode(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	peerUserIDStr, err := s.Cache.Get(ctx, s.cacheKey("invite_code", req.InviteCode)).Result()
-	if err == redis.Nil || peerUserIDStr == "" {
-		writeText(w, http.StatusNotFound, "invalid invite code")
-		return
-	}
-	if err != nil {
-		writeText(w, http.StatusInternalServerError, "internal error")
-		return
-	}
-
-	peerUserID, err := strconv.ParseInt(peerUserIDStr, 10, 64)
+	// Look up the code owner.
+	var peerUserID int64
+	err = s.AppDB.QueryRow(
+		`SELECT user_id FROM invite_code WHERE code = $1`,
+		req.InviteCode,
+	).Scan(&peerUserID)
 	if err != nil {
 		writeText(w, http.StatusNotFound, "invalid invite code")
 		return
@@ -215,63 +188,31 @@ func (s *Server) handleRedeemCode(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	bonusScore, peerTeamID, peerTeamName, err := s.BonusService.GiveBonus(claims.ID, peerUserID, req.InviteCode)
+	_, peerTeamID, peerTeamName, err := s.BonusService.GiveBonus(claims.ID, peerUserID, req.InviteCode)
 	if err != nil {
 		writeText(w, http.StatusInternalServerError, "internal error")
 		return
 	}
 
-	var peerAccount, peerNickname string
-	var peerAvatar sql.NullString
-	if err := s.DB.QueryRow(`SELECT account, nickname, avatar FROM "user" WHERE id = $1`, peerUserID).Scan(&peerAccount, &peerNickname, &peerAvatar); err != nil {
+	peerUser, err := s.R2S.GetUser(peerUserID)
+	if err != nil {
 		writeText(w, http.StatusInternalServerError, "internal error")
 		return
 	}
 
-	now := time.Now().UnixMilli()
-
-	invitedJSON, _ := s.Cache.Get(ctx, s.cacheKey("user", peerUserIDStr, "invited")).Result()
-	var invited []model.CacheInvitedEntry
-	if invitedJSON != "" {
-		json.Unmarshal([]byte(invitedJSON), &invited)
-	}
-	invited = append(invited, model.CacheInvitedEntry{
-		UserID:        claims.ID,
-		InviteCode:    req.InviteCode,
-		Timestamp:     now,
-		BonusTeamID:   peerTeamID,
-		BonusTeamName: peerTeamName,
-		BonusScore:    bonusScore,
-	})
-	invitedBytes, _ := json.Marshal(invited)
-
-	fromEntry := model.CacheFromEntry{
-		InviteCode: req.InviteCode,
-		PeerUserID: peerUserID,
-		PeerTeamID: peerTeamID,
-		Timestamp:  now,
-	}
-	fromBytes, _ := json.Marshal(fromEntry)
-
-	pipe := s.Cache.Pipeline()
-	pipe.Set(ctx, s.cacheKey("user", peerUserIDStr, "invited"), string(invitedBytes), 0)
-	pipe.Set(ctx, s.cacheKey("user", userIDStr, "from"), string(fromBytes), 0)
-	if _, err := pipe.Exec(ctx); err != nil {
-		writeText(w, http.StatusInternalServerError, "internal error")
-		return
-	}
+	// Retrieve the recorded timestamp from app DB.
+	var timestamp int64
+	s.AppDB.QueryRow(
+		`SELECT timestamp FROM redeem_record WHERE user_id = $1 AND game_id = $2`,
+		claims.ID, gameID,
+	).Scan(&timestamp)
 
 	writeJSON(w, http.StatusOK, model.RedeemResponse{
 		UserID:     claims.ID,
 		InviteCode: req.InviteCode,
-		PeerUser: model.UserBrief{
-			ID:        peerUserID,
-			Account:   peerAccount,
-			Nickname:  peerNickname,
-			AvatarURI: model.BuildImageURI(peerAvatar.String, peerAccount, s.ImageURITemplate),
-		},
-		PeerTeam:  model.TeamBrief{ID: peerTeamID, Name: peerTeamName},
-		Timestamp: now,
+		PeerUser:   peerUser,
+		PeerTeam:   model.TeamBrief{ID: peerTeamID, Name: peerTeamName},
+		Timestamp:  timestamp,
 	})
 }
 
@@ -283,67 +224,77 @@ func (s *Server) handleStatus(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	ctx := context.Background()
-	userIDStr := strconv.FormatInt(claims.ID, 10)
+	gameID := s.BonusService.Config.GameID
 
-	code, err := s.Cache.Get(ctx, s.cacheKey("user", userIDStr, "code")).Result()
-	if err != nil || code == "" {
+	// Get or create invite code.
+	var code string
+	err := s.AppDB.QueryRow(
+		`SELECT code FROM invite_code WHERE user_id = $1 AND game_id = $2`,
+		claims.ID, gameID,
+	).Scan(&code)
+	if err != nil {
 		code = generateNanoID()
-		pipe := s.Cache.Pipeline()
-		pipe.Set(ctx, s.cacheKey("user", userIDStr, "code"), code, 0)
-		pipe.Set(ctx, s.cacheKey("invite_code", code), userIDStr, 0)
-		pipe.Exec(ctx)
+		s.AppDB.Exec(
+			`INSERT INTO invite_code (user_id, game_id, code) VALUES ($1, $2, $3)
+			 ON CONFLICT (user_id, game_id) DO UPDATE SET code = EXCLUDED.code`,
+			claims.ID, gameID, code,
+		)
 	}
 
-	invitedJSON, _ := s.Cache.Get(ctx, s.cacheKey("user", userIDStr, "invited")).Result()
-	var cacheInvited []model.CacheInvitedEntry
-	if invitedJSON != "" {
-		json.Unmarshal([]byte(invitedJSON), &cacheInvited)
+	// Fetch all users that this user invited (redeem rows where peer_user_id = claims.ID).
+	rows, err := s.AppDB.Query(
+		`SELECT user_id, invite_code, bonus_score, peer_team_id, timestamp
+		 FROM redeem_record WHERE peer_user_id = $1 AND game_id = $2
+		 ORDER BY timestamp ASC`,
+		claims.ID, gameID,
+	)
+	if err != nil {
+		writeText(w, http.StatusInternalServerError, "internal error")
+		return
 	}
+	defer rows.Close()
 
-	invitedEntries := make([]model.InvitedEntry, 0, len(cacheInvited))
-	for _, ci := range cacheInvited {
-		var account, nickname string
-		var avatar sql.NullString
-		err := s.DB.QueryRow(`SELECT account, nickname, avatar FROM "user" WHERE id = $1`, ci.UserID).Scan(&account, &nickname, &avatar)
+	invitedEntries := make([]model.InvitedEntry, 0)
+	for rows.Next() {
+		var redeemerID, teamID, ts int64
+		var invCode string
+		var bonusScore int
+		if err := rows.Scan(&redeemerID, &invCode, &bonusScore, &teamID, &ts); err != nil {
+			continue
+		}
+
+		userBrief, err := s.R2S.GetUser(redeemerID)
 		if err != nil {
 			continue
 		}
+		teamName := s.R2S.GetTeamName(teamID)
+
 		invitedEntries = append(invitedEntries, model.InvitedEntry{
-			User: model.UserBrief{
-				ID:        ci.UserID,
-				Account:   account,
-				Nickname:  nickname,
-				AvatarURI: model.BuildImageURI(avatar.String, account, s.ImageURITemplate),
-			},
-			InviteCode: ci.InviteCode,
-			Timestamp:  ci.Timestamp,
-			BonusTeam:  model.TeamBrief{ID: ci.BonusTeamID, Name: ci.BonusTeamName},
-			BonusScore: ci.BonusScore,
+			User:       userBrief,
+			InviteCode: invCode,
+			Timestamp:  ts,
+			BonusTeam:  model.TeamBrief{ID: teamID, Name: teamName},
+			BonusScore: bonusScore,
 		})
 	}
 
+	// Fetch "from" entry: the row where user_id = claims.ID.
 	var from *model.FromEntry
-	fromJSON, err := s.Cache.Get(ctx, s.cacheKey("user", userIDStr, "from")).Result()
-	if err == nil && fromJSON != "" {
-		var f model.CacheFromEntry
-		if json.Unmarshal([]byte(fromJSON), &f) == nil {
-			var peerAccount, peerNickname string
-			var peerAvatar sql.NullString
-			s.DB.QueryRow(`SELECT account, nickname, avatar FROM "user" WHERE id = $1`, f.PeerUserID).Scan(&peerAccount, &peerNickname, &peerAvatar)
-			var peerTeamName string
-			s.DB.QueryRow(`SELECT name FROM team WHERE id = $1`, f.PeerTeamID).Scan(&peerTeamName)
-			from = &model.FromEntry{
-				InviteCode: f.InviteCode,
-				PeerUser: model.UserBrief{
-					ID:        f.PeerUserID,
-					Account:   peerAccount,
-					Nickname:  peerNickname,
-					AvatarURI: model.BuildImageURI(peerAvatar.String, peerAccount, s.ImageURITemplate),
-				},
-				PeerTeam:  model.TeamBrief{ID: f.PeerTeamID, Name: peerTeamName},
-				Timestamp: f.Timestamp,
-			}
+	var peerUserID, peerTeamID, fromTS int64
+	var fromCode string
+	err = s.AppDB.QueryRow(
+		`SELECT peer_user_id, peer_team_id, invite_code, timestamp
+		 FROM redeem_record WHERE user_id = $1 AND game_id = $2`,
+		claims.ID, gameID,
+	).Scan(&peerUserID, &peerTeamID, &fromCode, &fromTS)
+	if err == nil {
+		peerUser, _ := s.R2S.GetUser(peerUserID)
+		peerTeamName := s.R2S.GetTeamName(peerTeamID)
+		from = &model.FromEntry{
+			InviteCode: fromCode,
+			PeerUser:   peerUser,
+			PeerTeam:   model.TeamBrief{ID: peerTeamID, Name: peerTeamName},
+			Timestamp:  fromTS,
 		}
 	}
 

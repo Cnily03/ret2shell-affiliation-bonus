@@ -1,79 +1,52 @@
 package service
 
 import (
-	"context"
 	"database/sql"
-	"encoding/json"
 	"fmt"
-	"strconv"
 	"time"
-
-	"github.com/redis/go-redis/v9"
 
 	"bxsctf-invite-bonus/internal/config"
 	"bxsctf-invite-bonus/internal/model"
 )
 
 type BonusService struct {
-	DB                *sql.DB
-	Cache             *redis.Client
-	CachePrefix       string
-	Config            config.BonusConfig
-	ImageURITemplate string
+	R2S    *R2SService
+	AppDB  *sql.DB
+	Config config.BonusConfig
 }
 
-func (s *BonusService) cacheKey(parts ...string) string {
-	result := s.CachePrefix
-	for _, p := range parts {
-		result += ":" + p
-	}
-	return result
-}
-
-// GiveBonus returns (actualScore, peerTeamID, peerTeamName, error).
+// GiveBonus grants bonus points to the peer's team and records the redemption.
+// Returns (actualScore, peerTeamID, peerTeamName, error).
 func (s *BonusService) GiveBonus(redeemUserID, peerUserID int64, inviteCode string) (int, int64, string, error) {
-	ctx := context.Background()
 	gameID := s.Config.GameID
 	bonusScore := s.Config.BonusScore
 	maxScore := s.Config.MaxScore
 
-	var peerAccount string
-	err := s.DB.QueryRow(`SELECT account FROM "user" WHERE id = $1`, peerUserID).Scan(&peerAccount)
+	peerUser, err := s.R2S.GetUser(peerUserID)
 	if err != nil {
 		return 0, 0, "", fmt.Errorf("failed to get peer user: %w", err)
 	}
 
-	var redeemAccount string
-	err = s.DB.QueryRow(`SELECT account FROM "user" WHERE id = $1`, redeemUserID).Scan(&redeemAccount)
+	redeemUser, err := s.R2S.GetUser(redeemUserID)
 	if err != nil {
 		return 0, 0, "", fmt.Errorf("failed to get redeem user: %w", err)
 	}
 
-	var peerTeamID int64
-	var peerTeamName string
-	err = s.DB.QueryRow(
-		`SELECT t.id, t.name FROM team t
-		 JOIN user2_team ut ON ut.team_id = t.id
-		 WHERE ut.user_id = $1 AND t.game_id = $2 LIMIT 1`,
-		peerUserID, gameID,
-	).Scan(&peerTeamID, &peerTeamName)
+	peerTeam, err := s.R2S.GetUserTeam(peerUserID, gameID)
 	if err != nil {
 		return 0, 0, "", fmt.Errorf("failed to get peer team: %w", err)
 	}
+	peerTeamID := peerTeam.ID
+	peerTeamName := peerTeam.Name
 
-	// Read team score cache to get current bonus sum
-	teamIDStr := strconv.FormatInt(peerTeamID, 10)
-	teamScoreKey := s.cacheKey("team", teamIDStr, "score")
-
-	var scoreEntries []model.CacheTeamScoreEntry
-	scoreJSON, err := s.Cache.Get(ctx, teamScoreKey).Result()
-	if err == nil && scoreJSON != "" {
-		json.Unmarshal([]byte(scoreJSON), &scoreEntries)
-	}
-
+	// Sum bonus already awarded to the peer team in this game.
 	var currentBonusSum int
-	for _, e := range scoreEntries {
-		currentBonusSum += e.BonusScore
+	err = s.AppDB.QueryRow(
+		`SELECT COALESCE(SUM(bonus_score), 0) FROM redeem_record WHERE peer_team_id = $1 AND game_id = $2`,
+		peerTeamID, gameID,
+	).Scan(&currentBonusSum)
+	if err != nil {
+		return 0, 0, "", fmt.Errorf("failed to sum team bonus: %w", err)
 	}
 
 	actualScore := bonusScore
@@ -87,97 +60,61 @@ func (s *BonusService) GiveBonus(redeemUserID, peerUserID int64, inviteCode stri
 	now := time.Now().UnixMilli()
 
 	if actualScore > 0 {
-		reason := fmt.Sprintf("%s#%d invited %s#%d to participate in this game", peerAccount, peerUserID, redeemAccount, redeemUserID)
+		reason := fmt.Sprintf("%s#%d invited %s#%d", peerUser.Account, peerUserID, redeemUser.Account, redeemUserID)
 
-		_, err = s.DB.Exec(
-			`INSERT INTO extra (reason, score, team_id) VALUES ($1, $2, $3)`,
-			reason, actualScore, peerTeamID,
-		)
-		if err != nil {
+		if err = s.R2S.InsertExtra(reason, actualScore, peerTeamID); err != nil {
 			return 0, 0, "", fmt.Errorf("failed to insert extra: %w", err)
 		}
 
-		_, err = s.DB.Exec(
-			`UPDATE team SET score = score + $1 WHERE id = $2`,
-			actualScore, peerTeamID,
-		)
-		if err != nil {
+		if err = s.R2S.UpdateTeamScore(peerTeamID, actualScore); err != nil {
 			return 0, 0, "", fmt.Errorf("failed to update team score: %w", err)
 		}
 	}
 
-	// Always update team score cache
-	scoreEntries = append(scoreEntries, model.CacheTeamScoreEntry{
-		PeerUserID:   peerUserID,
-		RedeemUserID: redeemUserID,
-		InviteCode:   inviteCode,
-		BonusScore:   actualScore,
-		Timestamp:    now,
-	})
-	scoreBytes, _ := json.Marshal(scoreEntries)
-	s.Cache.Set(ctx, teamScoreKey, string(scoreBytes), 0)
+	// Record redemption in app DB (always, even when actualScore == 0).
+	_, err = s.AppDB.Exec(
+		`INSERT INTO redeem_record
+		 (user_id, peer_user_id, peer_team_id, invite_code, game_id, bonus_score, timestamp)
+		 VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+		redeemUserID, peerUserID, peerTeamID, inviteCode, gameID, actualScore, now,
+	)
+	if err != nil {
+		return 0, 0, "", fmt.Errorf("failed to record redemption: %w", err)
+	}
 
 	return actualScore, peerTeamID, peerTeamName, nil
 }
 
-// PerformCheck queries the database to see if the user has a team in the configured game.
+// PerformCheck returns the user's team info and cumulative bonus for the configured game.
 func (s *BonusService) PerformCheck(userID int64) (*model.CheckResponse, error) {
 	gameID := s.Config.GameID
 
-	var teamID int64
-	var teamName string
-	err := s.DB.QueryRow(
-		`SELECT t.id, t.name FROM team t
-		 JOIN user2_team ut ON ut.team_id = t.id
-		 WHERE ut.user_id = $1 AND t.game_id = $2 LIMIT 1`,
-		userID, gameID,
-	).Scan(&teamID, &teamName)
+	team, err := s.R2S.GetUserTeam(userID, gameID)
+	if err != nil {
+		return nil, err
+	}
+	teamID := team.ID
+	teamName := team.Name
+
+	members, err := s.R2S.GetTeamMembers(teamID)
 	if err != nil {
 		return nil, err
 	}
 
-	rows, err := s.DB.Query(
-		`SELECT user_id FROM user2_team WHERE team_id = $1`, teamID,
-	)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-
-	var members []int64
-	for rows.Next() {
-		var uid int64
-		if err := rows.Scan(&uid); err != nil {
-			return nil, err
-		}
-		members = append(members, uid)
-	}
-
-	var account, nickname string
-	var avatar sql.NullString
-	err = s.DB.QueryRow(`SELECT account, nickname, avatar FROM "user" WHERE id = $1`, userID).Scan(&account, &nickname, &avatar)
+	userBrief, err := s.R2S.GetUser(userID)
 	if err != nil {
 		return nil, err
 	}
 
-	teamIDStr := strconv.FormatInt(teamID, 10)
-	var scoreEntries []model.CacheTeamScoreEntry
-	if scoreJSON, err := s.Cache.Get(context.Background(), s.cacheKey("team", teamIDStr, "score")).Result(); err == nil && scoreJSON != "" {
-		json.Unmarshal([]byte(scoreJSON), &scoreEntries)
-	}
 	var totalBonus int
-	for _, e := range scoreEntries {
-		totalBonus += e.BonusScore
-	}
+	s.AppDB.QueryRow(
+		`SELECT COALESCE(SUM(bonus_score), 0) FROM redeem_record WHERE peer_team_id = $1 AND game_id = $2`,
+		teamID, gameID,
+	).Scan(&totalBonus)
 
 	return &model.CheckResponse{
 		GameID: gameID,
-		User: model.UserBrief{
-			ID:        userID,
-			Account:   account,
-			Nickname:  nickname,
-			AvatarURI: model.BuildImageURI(avatar.String, account, s.ImageURITemplate),
-		},
-		Team: model.CheckTeam{ID: teamID, Name: teamName, Members: members, TotalBonus: totalBonus},
+		User:   userBrief,
+		Team:   model.CheckTeam{ID: teamID, Name: teamName, Members: members, TotalBonus: totalBonus},
 	}, nil
 }

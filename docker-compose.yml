@@ -1,0 +1,14 @@
+name: invite-bonus
+
+services:
+  database:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_PASSWORD: Development
+      POSTGRES_USER: bonus
+      POSTGRES_DB: invite-bonus
+    volumes:
+      - ./data/database:/var/lib/postgresql/data
+    ports:
+      - '15432:5432'

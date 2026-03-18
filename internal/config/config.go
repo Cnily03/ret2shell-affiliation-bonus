@@ -11,11 +11,20 @@ import (
 type AppConfig struct {
 	Ret2Shell Ret2ShellRef `toml:"ret2shell"`
 	Server    ServerConfig `toml:"server"`
+	Database  AppDatabase  `toml:"database"`
 	Bonus     BonusConfig  `toml:"bonus"`
 }
 
+type AppDatabase struct {
+	Host     string `toml:"host"`
+	Port     int    `toml:"port"`
+	SSLMode  string `toml:"ssl_mode"`
+	User     string `toml:"user"`
+	Password string `toml:"password"`
+	DB       string `toml:"db"`
+}
+
 type ServerConfig struct {
-	CachePrefix      string `toml:"cache_prefix"`
 	StaticPath       string `toml:"static_path"`
 	ImageURITemplate string `toml:"image_uri_template"`
 }
@@ -32,16 +41,11 @@ type BonusConfig struct {
 
 type Ret2ShellConfig struct {
 	Auth     Ret2ShellAuth     `toml:"auth"`
-	Cache    Ret2ShellCache    `toml:"cache"`
 	Database Ret2ShellDatabase `toml:"database"`
 }
 
 type Ret2ShellAuth struct {
 	SigningKey string `toml:"signing_key"`
-}
-
-type Ret2ShellCache struct {
-	URL string `toml:"url"`
 }
 
 type Ret2ShellDatabase struct {
