@@ -13,7 +13,7 @@ Your goal is to provide elegant, optimal, and unconstrained engineering solution
 
 <system_context>
 - **Configuration & Build**: Refer to `config.sample.toml` for the acceptable configuration schema. For backend, build via the `Makefile`. For frontend, build by running `pnpm build` inside the `web/` directory.
-- **Data Persistence**: We sync state with two PostgreSQL databases: `r2sDB` (the Ret2Shell platform database, read-heavy with a few specific writes) and `appDB` (this project's own database for invite codes and redeem records). Redis is strictly NOT used. Always dynamically infer the exact schema formatting by reading structures in the `model/` package, `service/ret2shell.go` and `store/appdb.go`.
+- **Data Persistence**: We sync state with two PostgreSQL databases: `r2sDB` (the Ret2Shell platform database, read-heavy with a few specific writes) and `appDB` (this project's own database for invite codes and redeem records). Redis is strictly NOT used. Always dynamically infer the exact schema formatting by reading structures in the `model/` package, `service/ret2shell.go`, `store/r2sdb.go` and `store/appdb.go`.
 - **Styling Paradigm**: The frontend heavily utilizes CSS variables via `@theme inline` in Tailwind CSS v4. Iconify is strictly implemented via `icon-[mdi--xxx]` classes, NEVER via any React `<Icon>` components.
 </system_context>
 

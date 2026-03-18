@@ -2,18 +2,9 @@ package config
 
 import (
 	"fmt"
-	"os"
-	"path/filepath"
 
 	"github.com/BurntSushi/toml"
 )
-
-type AppConfig struct {
-	Ret2Shell Ret2ShellRef `toml:"ret2shell"`
-	Server    ServerConfig `toml:"server"`
-	Database  AppDatabase  `toml:"database"`
-	Bonus     BonusConfig  `toml:"bonus"`
-}
 
 type AppDatabase struct {
 	Host     string `toml:"host"`
@@ -27,10 +18,6 @@ type AppDatabase struct {
 type ServerConfig struct {
 	StaticPath       string `toml:"static_path"`
 	ImageURITemplate string `toml:"image_uri_template"`
-}
-
-type Ret2ShellRef struct {
-	ConfigPath string `toml:"config_path"`
 }
 
 type BonusConfig struct {
@@ -58,29 +45,16 @@ type Ret2ShellDatabase struct {
 }
 
 type Config struct {
-	App       AppConfig
-	Ret2Shell Ret2ShellConfig
+	Ret2Shell Ret2ShellConfig `toml:"ret2shell"`
+	Server    ServerConfig    `toml:"server"`
+	Database  AppDatabase     `toml:"database"`
+	Bonus     BonusConfig     `toml:"bonus"`
 }
 
 func Load(configPath string) (*Config, error) {
-	var app AppConfig
-	if _, err := toml.DecodeFile(configPath, &app); err != nil {
+	var cfg Config
+	if _, err := toml.DecodeFile(configPath, &cfg); err != nil {
 		return nil, fmt.Errorf("failed to load config: %w", err)
 	}
-
-	r2Path := app.Ret2Shell.ConfigPath
-	if !filepath.IsAbs(r2Path) {
-		r2Path = filepath.Join(filepath.Dir(configPath), r2Path)
-	}
-
-	if _, err := os.Stat(r2Path); err != nil {
-		return nil, fmt.Errorf("ret2shell config not found: %w", err)
-	}
-
-	var r2 Ret2ShellConfig
-	if _, err := toml.DecodeFile(r2Path, &r2); err != nil {
-		return nil, fmt.Errorf("failed to load ret2shell config: %w", err)
-	}
-
-	return &Config{App: app, Ret2Shell: r2}, nil
+	return &cfg, nil
 }

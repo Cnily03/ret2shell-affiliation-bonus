@@ -73,7 +73,7 @@ func main() {
 	defer r2sDB.Close()
 	fmt.Println("Ret2Shell database connected")
 
-	appDB, err := store.ConnectAppDatabase(cfg.App.Database)
+	appDB, err := store.ConnectAppDatabase(cfg.Database)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
@@ -81,12 +81,12 @@ func main() {
 	defer appDB.Close()
 	fmt.Println("App database connected")
 
-	r2sSvc := service.NewR2SService(r2sDB, cfg.App.Server.ImageURITemplate)
+	r2sSvc := service.NewR2SService(r2sDB, cfg.Server.ImageURITemplate)
 
 	bonusSvc := &service.BonusService{
 		R2S:    r2sSvc,
 		AppDB:  appDB,
-		Config: cfg.App.Bonus,
+		Config: cfg.Bonus,
 	}
 
 	srv := &api.Server{
@@ -100,7 +100,7 @@ func main() {
 
 	srv.SetupRoutes(r)
 
-	staticPath := cfg.App.Server.StaticPath
+	staticPath := cfg.Server.StaticPath
 	if info, err := os.Stat(staticPath); err == nil && info.IsDir() {
 		r.PathPrefix("/").Handler(http.FileServer(noDirList(http.Dir(staticPath))))
 	} else {

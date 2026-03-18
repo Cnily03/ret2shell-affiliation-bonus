@@ -1,12 +1,20 @@
-[ret2shell]
-config_path = "/etc/ret2shell/config.toml"
+[ret2shell.auth]
+signing_key = 'KeyDevelopment' # ! REPLACE IT
+
+[ret2shell.database]
+host     = 'localhost'
+port     = 5432
+ssl_mode = 'disable'     # disable, allow, prefer, require, verify-ca, verify-full
+user     = 'ret2shell'
+password = 'Development' # ! REPLACE IT
+db       = 'ret2shell'
 
 [database]
 host     = 'localhost'
 port     = 15432
 ssl_mode = 'disable'     # disable, allow, prefer, require, verify-ca, verify-full
 user     = 'bxs'
-password = 'Development'
+password = 'Development' # ! REPLACE IT
 db       = 'aff-bonus'
 
 [server]
